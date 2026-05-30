@@ -26,7 +26,7 @@ export default function GraphPage() {
   return (
     <main className="relative h-screen overflow-hidden">
       <Chrome />
-      <div className="fixed inset-0 z-0"><RealityGraph nodes={NODE_ORDER} states={states} phase="complete" /></div>
+      <div className="fixed inset-0 z-0"><RealityGraph nodes={NODE_ORDER} states={states} phase="complete" offsetX={1.8} /></div>
 
       {!rec && (
         <div className="fixed left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 brutal p-8 text-center" style={{ background: "var(--paper)" }}>

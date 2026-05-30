@@ -11,7 +11,7 @@ import { NODE_ORDER, SOURCES, type NodeId } from "@/lib/types";
 
 export type NodeState = "idle" | "running" | "done" | "error";
 export type NodeStateMap = { [id: string]: NodeState };
-export interface Props { nodes: NodeId[]; states: NodeStateMap; phase: "idle" | "compiling" | "complete" }
+export interface Props { nodes: NodeId[]; states: NodeStateMap; phase: "idle" | "compiling" | "complete"; offsetX?: number }
 
 const INK    = new THREE.Color("#1a1a1b");
 const STAMP  = new THREE.Color("#ff4500");
@@ -29,10 +29,10 @@ interface Node {
   particles: THREE.Points; angle: number; state: NodeState; flash: number;
 }
 
-export default function RealityGraph({ nodes, states, phase }: Props) {
+export default function RealityGraph({ nodes, states, phase, offsetX = 0 }: Props) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const nodesRef = useRef(nodes); const statesRef = useRef(states); const phaseRef = useRef(phase);
-  nodesRef.current = nodes; statesRef.current = states; phaseRef.current = phase;
+  const nodesRef = useRef(nodes); const statesRef = useRef(states); const phaseRef = useRef(phase); const offRef = useRef(offsetX);
+  nodesRef.current = nodes; statesRef.current = states; phaseRef.current = phase; offRef.current = offsetX;
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -94,9 +94,11 @@ export default function RealityGraph({ nodes, states, phase }: Props) {
       const accentStamp = SOURCES[id]?.accent === "gold"; // gold→orange accent in this palette
 
       const group = new THREE.Group(); group.position.set(x, 0, z); scene.add(group);
-      const geo = accentStamp ? new THREE.BoxGeometry(0.42, 0.42, 0.42) : new THREE.IcosahedronGeometry(0.3, 0);
-      const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: FADE.clone() }));
+      const geo = accentStamp ? new THREE.BoxGeometry(0.52, 0.52, 0.52) : new THREE.IcosahedronGeometry(0.42, 0);
+      const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: FADE.clone(), emissive: FADE.clone(), emissiveIntensity: 0.15 }));
       mesh.castShadow = true; group.add(mesh);
+      const edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x1a1a1b, transparent: true, opacity: 0.55 }));
+      mesh.add(edge);
 
       const line = new THREE.Line(
         new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(x, 0, z)]),
@@ -142,6 +144,8 @@ export default function RealityGraph({ nodes, states, phase }: Props) {
         const col = targetColor(n.state);
         const mat = n.mesh.material as THREE.MeshLambertMaterial;
         mat.color.lerp(col, 0.12);
+        mat.emissive.lerp(col, 0.12);
+        mat.emissiveIntensity = THREE.MathUtils.lerp(mat.emissiveIntensity, n.state === "running" ? 0.5 : n.state === "done" ? 0.28 : 0.14, 0.15);
         n.mesh.rotation.y += dt * (n.state === "running" ? 1.5 : 0.25);
         const pulse = n.state === "running" ? 1 + Math.sin(t * 7) * 0.12 : 1;
         n.mesh.scale.setScalar(THREE.MathUtils.lerp(n.mesh.scale.x, pulse + n.flash * 0.5, 0.2));
@@ -167,13 +171,15 @@ export default function RealityGraph({ nodes, states, phase }: Props) {
       }
 
       const dest = ph === "complete" ? camDone : ph === "idle" ? camIdle : camWork;
+      const ox = offRef.current;
       const swing = ph === "idle" ? 1.4 : compilingNow ? 1.1 : 0.5;
       const rate  = ph === "idle" ? 0.1 : compilingNow ? 0.22 : 0.16;
       camera.position.lerp(new THREE.Vector3(
-        dest.x + Math.sin(t * rate) * swing,
+        dest.x + ox + Math.sin(t * rate) * swing,
         dest.y + (compilingNow ? Math.sin(t * 0.5) * 0.4 : 0),
         dest.z + Math.cos(t * rate) * swing,
       ), 0.025);
+      lookTarget.x = ox;
       camera.lookAt(lookTarget);
 
       renderer.render(scene, camera);

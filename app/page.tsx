@@ -7,6 +7,7 @@ import RealityGraph, { type NodeStateMap } from "@/components/RealityGraph";
 import Chrome from "@/components/Chrome";
 import DossierView from "@/components/DossierView";
 import { SourceLogo, ArrowUR } from "@/components/logos";
+import Sticky from "@/components/Sticky";
 import { SPRING, riseIn, submitShake } from "@/lib/motion";
 import { saveCompile } from "@/lib/store";
 import { parseSSE } from "@/lib/sse";
@@ -243,6 +244,12 @@ function Console(p: {
               </div>
             ))}
           </div>
+        </div>
+        {/* field notes — cute + informative */}
+        <div className="mt-9 grid gap-5 sm:grid-cols-3">
+          <Sticky index={0} label="how it scores" text="Field Velocity = commit rate × paper cadence × startup adoption. 76+ means an explosive ecosystem." />
+          <Sticky index={1} label="pro tip" text="Inside a dossier, hover the blacked-out Community blocks to declassify the real ecosystem friction." />
+          <Sticky index={2} label="it remembers" text="Every compile is filed to Archives — reopen it as a dossier or a live 3D knowledge graph." />
         </div>
         {p.error && <p className="mt-4 mono text-sm" style={{ color: "var(--stamp)" }}>{p.error}</p>}
       </div>

@@ -17,10 +17,11 @@ import {
 
 const INR = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
 
-const SAMPLES = [
-  "Goa this weekend, ₹15k, 2 people, quiet beach",
-  "Pondicherry next weekend, ₹10k, slow + food",
-  "Manali next month, ₹25k for 3, snow + trek",
+type Sample = { from: string; to: string; intention: string };
+const SAMPLES: Sample[] = [
+  { from: "Bangalore", to: "Goa", intention: "this weekend, ₹15k, quiet beach" },
+  { from: "Chennai", to: "Pondicherry", intention: "next weekend, ₹10k, slow + food" },
+  { from: "", to: "Manali", intention: "next month, ₹25k for 3, snow + trek" },
 ];
 
 const STAGE_LABELS: Record<string, string> = {
@@ -35,7 +36,10 @@ type Phase = "idle" | "compiling" | "complete";
 
 export default function Page() {
   const [phase, setPhase] = useState<Phase>("idle");
-  const [intention, setIntention] = useState<string>(SAMPLES[0]);
+  const [from, setFrom] = useState<string>(SAMPLES[0].from);
+  const [to, setTo] = useState<string>(SAMPLES[0].to);
+  const [party, setParty] = useState<number>(0);
+  const [intention, setIntention] = useState<string>(SAMPLES[0].intention);
   const [stage, setStage] = useState<string>("parse");
   const [intent, setIntent] = useState<Intent | null>(null);
   const [nodes, setNodes] = useState<NodeId[]>([]);
@@ -48,7 +52,7 @@ export default function Page() {
   const tickRef = useRef<number | null>(null);
 
   const startCompile = useCallback(async () => {
-    if (!intention.trim()) return;
+    if (!intention.trim() && !to.trim()) return;
     setError(null);
     setStage("parse");
     setIntent(null);
@@ -56,7 +60,8 @@ export default function Page() {
     setStates({});
     setResults({});
     setSynthesis(null);
-    setLog([`> ${intention}`]);
+    const logLine = [from && `from ${from}`, to && `to ${to}`, intention].filter(Boolean).join(" · ");
+    setLog([`> ${logLine}`]);
     setPhase("compiling");
     const t0 = Date.now();
     if (tickRef.current) window.clearInterval(tickRef.current);
@@ -66,7 +71,12 @@ export default function Page() {
       const res = await fetch("/api/compile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intention }),
+        body: JSON.stringify({
+          intention,
+          from: from.trim() || undefined,
+          to: to.trim() || undefined,
+          party: party > 0 ? party : undefined,
+        }),
       });
       if (!res.ok || !res.body) throw new Error(`Server ${res.status}`);
       for await (const ev of parseSSE(res.body)) applyEvent(ev);
@@ -114,10 +124,9 @@ export default function Page() {
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get("auto") as Provider | null;
-    if (p && ["amazon", "swiggy", "blinkit", "goa", "manali", "pondicherry"].includes(p as string)) {
-      // ?auto=goa etc → preset intention then run
-      const found = SAMPLES.find((s) => s.toLowerCase().includes(String(p).toLowerCase()));
-      if (found) setIntention(found);
+    if (p && ["goa", "manali", "pondicherry"].includes(p as string)) {
+      const found = SAMPLES.find((s) => s.to.toLowerCase().includes(String(p).toLowerCase()));
+      if (found) { setFrom(found.from); setTo(found.to); setIntention(found.intention); }
       setTimeout(() => startCompile(), 200);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -131,7 +140,13 @@ export default function Page() {
       <Nav onHome={reset} />
       <AnimatePresence mode="wait">
         {phase === "idle" && (
-          <Idle key="idle" intention={intention} setIntention={setIntention} onCompile={startCompile} error={error} />
+          <Idle key="idle"
+            from={from} setFrom={setFrom}
+            to={to} setTo={setTo}
+            party={party} setParty={setParty}
+            intention={intention} setIntention={setIntention}
+            onCompile={startCompile} error={error}
+          />
         )}
         {phase === "compiling" && (
           <Compiling key="comp" intention={intention} intent={intent} nodes={nodes} states={states} stage={stage} log={log} elapsedMs={elapsedMs} error={error} />
@@ -171,8 +186,14 @@ function Nav({ onHome }: { onHome: () => void }) {
 
 /* ============================ IDLE ============================ */
 function Idle({
-  intention, setIntention, onCompile, error,
-}: { intention: string; setIntention: (s: string) => void; onCompile: () => void; error: string | null }) {
+  from, setFrom, to, setTo, party, setParty, intention, setIntention, onCompile, error,
+}: {
+  from: string; setFrom: (s: string) => void;
+  to: string; setTo: (s: string) => void;
+  party: number; setParty: (n: number) => void;
+  intention: string; setIntention: (s: string) => void;
+  onCompile: () => void; error: string | null;
+}) {
   const allIdle = useMemo(() => Object.fromEntries(Object.keys(NODE_REGISTRY).map((k) => [k, "idle"])) as NodeStateMap, []);
   const allNodeIds = useMemo(() => Object.keys(NODE_REGISTRY) as NodeId[], []);
 
@@ -191,7 +212,7 @@ function Idle({
         <div className="rise" style={{ animationDelay: "0.1s" }}>
           <div className="liquid-glass rounded-full inline-flex items-center gap-2 pr-3.5">
             <span className="bg-signal text-black px-2.5 py-1 text-[0.62rem] font-semibold rounded-full tracking-wide">LIVE</span>
-            <span className="text-[0.8rem] text-platinum/85 font-sans">Seven sources reconciled in under 10 seconds</span>
+            <span className="text-[0.8rem] text-platinum/85 font-sans">Eight sources reconciled in under 10 seconds</span>
           </div>
         </div>
 
@@ -208,6 +229,7 @@ function Idle({
         {/* command card */}
         <div className="rise mt-8 w-full max-w-2xl" style={{ animationDelay: "1s" }}>
           <div className="card-strong rounded-[1.6rem] p-6 text-left">
+            {/* header row */}
             <div className="flex items-center gap-2.5">
               <span className="num text-signal text-sm">&gt;</span>
               <span className="eyebrow text-[0.52rem]">your intention</span>
@@ -215,19 +237,59 @@ function Idle({
                 <span className="h-1.5 w-1.5 rounded-full bg-pulse animate-pulse" /> READY
               </span>
             </div>
+
+            {/* from → to + party row */}
+            <div className="mt-4 flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-1 min-w-[120px] liquid-glass rounded-xl px-3 py-2">
+                <span className="eyebrow text-[0.48rem] text-ash shrink-0">FROM</span>
+                <input
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                  placeholder="Bangalore"
+                  className="flex-1 min-w-0 bg-transparent font-sans text-[0.88rem] text-platinum placeholder-platinum/30 focus:outline-none"
+                />
+              </div>
+              <span className="text-platinum/30 text-lg shrink-0">→</span>
+              <div className="flex items-center gap-1.5 flex-1 min-w-[120px] liquid-glass rounded-xl px-3 py-2">
+                <span className="eyebrow text-[0.48rem] text-ash shrink-0">TO</span>
+                <input
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  placeholder="Goa, Manali…"
+                  autoFocus
+                  className="flex-1 min-w-0 bg-transparent font-sans text-[0.88rem] text-platinum placeholder-platinum/30 focus:outline-none"
+                />
+              </div>
+              {/* party stepper */}
+              <div className="flex items-center gap-0 liquid-glass rounded-xl overflow-hidden shrink-0">
+                <button onClick={() => setParty(Math.max(0, party - 1))}
+                  className="px-3 py-2 text-platinum/60 hover:text-platinum transition-colors font-sans text-sm">−</button>
+                <div className="px-2 py-2 text-center min-w-[2.5rem]">
+                  {party === 0
+                    ? <span className="eyebrow text-[0.48rem] text-ash leading-none">PAX</span>
+                    : <span className="font-sans text-[0.88rem] text-platinum">{party}</span>}
+                </div>
+                <button onClick={() => setParty(Math.min(12, party + 1))}
+                  className="px-3 py-2 text-platinum/60 hover:text-signal transition-colors font-sans text-sm">+</button>
+              </div>
+            </div>
+
+            {/* intent textarea — vibe / budget / dates */}
             <textarea
               value={intention}
               onChange={(e) => setIntention(e.target.value)}
               onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") onCompile(); }}
-              rows={2} autoFocus
-              className="mt-3 block w-full resize-none border-0 bg-transparent serif text-[clamp(1.4rem,2.6vw,2rem)] leading-tight text-platinum placeholder-platinum/25 focus:outline-none"
+              rows={2}
+              placeholder="this weekend, ₹15k, quiet beach…"
+              className="mt-4 block w-full resize-none border-0 bg-transparent serif text-[clamp(1.2rem,2.2vw,1.7rem)] leading-tight text-platinum placeholder-platinum/25 focus:outline-none"
             />
+
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-1.5">
                 {SAMPLES.map((s) => (
-                  <button key={s} onClick={() => setIntention(s)}
-                    className={`liquid-glass rounded-full px-3 py-1.5 text-[0.72rem] font-sans transition-colors ${intention === s ? "text-signal" : "text-platinum/75 hover:text-platinum"}`}>
-                    {s.split(",")[0]}
+                  <button key={s.to} onClick={() => { setFrom(s.from); setTo(s.to); setIntention(s.intention); }}
+                    className={`liquid-glass rounded-full px-3 py-1.5 text-[0.72rem] font-sans transition-colors ${to === s.to && intention === s.intention ? "text-signal" : "text-platinum/75 hover:text-platinum"}`}>
+                    {s.from ? `${s.from} → ${s.to}` : s.to}
                   </button>
                 ))}
               </div>
@@ -299,6 +361,7 @@ function LandingSections() {
     { label: "Context", source: "Wikipedia", live: true, gives: "Grounding context on the destination." },
     { label: "Ground truth", source: "Reddit", live: true, gives: "Unfiltered takes from people who actually went." },
     { label: "Flights", source: "Skyscanner", live: false, gives: "Live fares compared across airlines." },
+    { label: "Buses", source: "Redbus", live: false, gives: "Bus fares and operators — often cheaper than flights for under 10h routes." },
     { label: "Stays", source: "Agoda + Airbnb", live: false, gives: "Rooms at the true all-in price, fees included." },
     { label: "Events", source: "BookMyShow", live: false, gives: "What's actually on those nights." },
   ];
@@ -336,7 +399,7 @@ function LandingSections() {
       {/* §02 — how it compiles */}
       <Section kicker="// how it compiles" title="Not a chatbot." accent="A compiler.">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-          {[{ n: "7", l: "live sources" }, { n: "<10s", l: "to reconcile" }, { n: "4", l: "real-time APIs" }, { n: "0", l: "hallucinated facts" }].map((s) => (
+          {[{ n: "8", l: "live sources" }, { n: "<10s", l: "to reconcile" }, { n: "4", l: "real-time APIs" }, { n: "0", l: "hallucinated facts" }].map((s) => (
             <div key={s.l} className="card rounded-[1.1rem] p-6">
               <div className="serif text-signal text-[2.6rem] leading-none">{s.n}</div>
               <div className="num text-[0.58rem] tracking-widest text-ash mt-3 uppercase">{s.l}</div>
@@ -367,8 +430,8 @@ function LandingSections() {
       </Section>
 
       {/* §03 — the sources */}
-      <Section kicker="// the sources" title="Seven systems." accent="One truth."
-        sub="Each one fires in parallel and returns clean structured data. Four are live public APIs today; three are wire-ready — one key flips them to live.">
+      <Section kicker="// the sources" title="Eight systems." accent="One truth."
+        sub="Each one fires in parallel and returns clean structured data. Four are live public APIs today; four are wire-ready — one key flips them to live.">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sources.map((s) => (
             <div key={s.source} className="card rounded-[1.2rem] p-6">
@@ -602,6 +665,7 @@ function renderPreview(r: NodeResult): string {
   if (r.id === "wiki") { const d = r.data as { title: string; summary: string }; return `${d.title} — ${d.summary.slice(0, 130)}…`; }
   if (r.id === "reddit") { const d = r.data as { posts: { title: string }[]; sentiment: string }; return `sentiment: ${d.sentiment} · top: "${d.posts[0]?.title?.slice(0, 80) ?? "—"}"`; }
   if (r.id === "flights") { const d = r.data as { airline: string; price_inr: number; route: string }[]; return d.slice(0, 3).map((f) => `${f.airline} ${f.route} ₹${f.price_inr}`).join(" · "); }
+  if (r.id === "buses") { const d = r.data as { operator: string; type: string; price_inr: number; duration_hours: number }[]; return d.slice(0, 3).map((b) => `${b.operator} (${b.type}) ₹${b.price_inr} · ${b.duration_hours}h`).join(" · "); }
   if (r.id === "stays") { const d = r.data as { platform: string; name: string; all_in_nightly_inr: number; nightly_inr: number }[]; const s = d[0]; return s ? `cheapest: ${s.name} (${s.platform}) — shown ₹${s.nightly_inr}, all-in ₹${s.all_in_nightly_inr}` : "—"; }
   if (r.id === "events") { const d = r.data as { name: string; price_inr: number | "free" }[]; return d.slice(0, 3).map((e) => `${e.name} (${e.price_inr === "free" ? "free" : "₹" + e.price_inr})`).join(" · "); }
   return JSON.stringify(r.data).slice(0, 130);

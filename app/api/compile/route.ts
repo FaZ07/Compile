@@ -9,6 +9,7 @@ import { fetchWeather } from "@/lib/nodes/weather";
 import { fetchReddit } from "@/lib/nodes/reddit";
 import { fetchWiki } from "@/lib/nodes/wiki";
 import { fetchFlights } from "@/lib/nodes/flights";
+import { fetchBuses } from "@/lib/nodes/buses";
 import { fetchStays } from "@/lib/nodes/stays";
 import { fetchEvents } from "@/lib/nodes/events";
 import { synthesize } from "@/lib/synthesize";
@@ -19,14 +20,14 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  let body: { intention?: string };
+  let body: { intention?: string; from?: string; to?: string; party?: number };
   try {
     body = await req.json();
   } catch {
     return new Response("bad json", { status: 400 });
   }
   const text = (body.intention ?? "").trim();
-  if (!text) return new Response("missing intention", { status: 400 });
+  if (!text && !body.to) return new Response("missing intention", { status: 400 });
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -34,7 +35,11 @@ export async function POST(req: Request) {
       try {
         // -- Stage 1: parse intent ---------------------------------------
         sse.send({ type: "stage", stage: "parse" });
-        const intent = await parseIntent(text);
+        const intent = await parseIntent(text || `trip to ${body.to}`);
+        // Explicit fields override parsed intent
+        if (body.to) intent.destination = body.to;
+        if (body.from !== undefined) intent.origin = body.from;
+        if (body.party && body.party > 0) intent.party_size = body.party;
         sse.send({ type: "intent", intent });
 
         // -- Stage 2: compile DAG ----------------------------------------
@@ -57,11 +62,13 @@ export async function POST(req: Request) {
         }
         const L = loc.data;
 
+        const transportOrigin = intent.origin || "Bangalore";
         await Promise.all([
           runNode("weather", sse, results, () => fetchWeather(L)),
           runNode("wiki", sse, results, () => fetchWiki(intent.destination)),
           runNode("reddit", sse, results, () => fetchReddit(intent.destination, intent.vibe || intent.themes.join(" "))),
-          runNode("flights", sse, results, () => fetchFlights(intent.origin || "Bangalore", intent.destination, intent.date_window)),
+          runNode("flights", sse, results, () => fetchFlights(transportOrigin, intent.destination, intent.date_window)),
+          runNode("buses", sse, results, () => fetchBuses(transportOrigin, intent.destination, intent.date_window)),
           runNode("stays", sse, results, () => fetchStays(intent.destination, intent.party_size, intent.budget_inr ?? 15000)),
           runNode("events", sse, results, () => fetchEvents(intent.destination)),
         ]);

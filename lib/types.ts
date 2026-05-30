@@ -6,6 +6,7 @@ export type NodeId =
   | "reddit"
   | "wiki"
   | "flights"
+  | "buses"
   | "stays"
   | "events";
 
@@ -24,8 +25,9 @@ export const NODE_REGISTRY: Record<NodeId, NodeMeta> = {
   wiki: { id: "wiki", label: "Context", source: "Wikipedia", real: true, angleOrder: 2 },
   reddit: { id: "reddit", label: "Ground truth", source: "Reddit", real: true, angleOrder: 3 },
   flights: { id: "flights", label: "Flights", source: "Skyscanner *", real: false, angleOrder: 4 },
-  stays: { id: "stays", label: "Stays", source: "Agoda + Airbnb *", real: false, angleOrder: 5 },
-  events: { id: "events", label: "Events", source: "BookMyShow *", real: false, angleOrder: 6 },
+  buses: { id: "buses", label: "Buses", source: "Redbus *", real: false, angleOrder: 5 },
+  stays: { id: "stays", label: "Stays", source: "Agoda + Airbnb *", real: false, angleOrder: 6 },
+  events: { id: "events", label: "Events", source: "BookMyShow *", real: false, angleOrder: 7 },
 };
 
 export interface Intent {
@@ -34,6 +36,7 @@ export interface Intent {
   origin?: string;
   budget_inr?: number;
   party_size: number;
+  nights: number; // trip duration in nights (1 night = 2-day trip)
   vibe: string; // free-text mood tag
   themes: string[]; // e.g. ["beach", "nightlife"]
   date_window: string; // human readable; e.g. "this weekend"
@@ -71,6 +74,16 @@ export interface FlightOption {
   route: string; // "BLR → GOI"
 }
 
+export interface BusOption {
+  operator: string;
+  type: string; // "Sleeper AC", "Seater", "Volvo AC"
+  depart: string; // ISO
+  arrive: string;
+  duration_hours: number;
+  price_inr: number;
+  route: string;
+}
+
 export interface StayOption {
   platform: string;
   name: string;
@@ -95,6 +108,7 @@ export type NodePayload =
   | { id: "reddit"; data: RedditData }
   | { id: "wiki"; data: WikiData }
   | { id: "flights"; data: FlightOption[] }
+  | { id: "buses"; data: BusOption[] }
   | { id: "stays"; data: StayOption[] }
   | { id: "events"; data: EventOption[] };
 

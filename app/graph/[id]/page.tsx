@@ -23,12 +23,17 @@ export default function GraphPage() {
     [sel],
   );
 
-  if (rec === null) return <Missing id={id} />;
-
   return (
     <main className="relative h-screen overflow-hidden">
       <Chrome />
       <div className="fixed inset-0 z-0"><RealityGraph nodes={NODE_ORDER} states={states} phase="complete" /></div>
+
+      {!rec && (
+        <div className="fixed left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 brutal p-8 text-center" style={{ background: "var(--paper)" }}>
+          <p className="display text-[1.5rem]">{rec === undefined ? "LOADING WORKSPACE…" : "NODE NOT FOUND"}</p>
+          {rec === null && (<><p className="mono text-[0.7rem] mt-2" style={{ color: "var(--ink-3)" }}>/{id} has not been compiled in this browser yet</p><Link href="/" className="press btn-stamp inline-block px-6 py-3 mt-4 text-[0.86rem]">COMPILE IT ↗</Link></>)}
+        </div>
+      )}
 
       {rec && (
         <>
@@ -114,13 +119,3 @@ function List({ items }: { items: { label: string; meta: string; url?: string }[
   );
 }
 
-function Missing({ id }: { id: string }) {
-  return (
-    <main className="relative min-h-screen"><Chrome />
-      <div className="relative z-10 pt-40 mx-auto max-w-md px-5 text-center">
-        <div className="brutal p-8"><p className="display text-[1.6rem]">NODE NOT FOUND</p><p className="mono text-[0.72rem] mt-2" style={{ color: "var(--ink-3)" }}>/{id}</p>
-          <Link href="/" className="press btn-stamp inline-block px-6 py-3 mt-5 text-[0.86rem]">COMPILE IT ↗</Link></div>
-      </div>
-    </main>
-  );
-}

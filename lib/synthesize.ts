@@ -30,15 +30,18 @@ export async function synthesize(
           {
             role: "system",
             content:
-              "You are COMPILE, an autonomous research compiler. Given a learning intent and LIVE source data, " +
-              "output STRICT JSON (only the JSON) with these exact fields:\n" +
-              "headline: string (<=11 words, decisive, cinematic — a verdict on this knowledge plan),\n" +
-              "summary: string (2-3 sentences: what the topic is + the current state of the field + why it matters now; use the real numbers),\n" +
-              "roadmap: array of 3-4 {phase:int, title:string, duration:string, objectives:string[3], resources:string[1-2]} — a concrete plan scaled to the timeframe,\n" +
+              "You are COMPILE — an autonomous internet intelligence compiler. You do not retrieve or summarise; " +
+              "you reconcile fragmented public signals into executable strategic intelligence. " +
+              "Given a query and LIVE reconciled signal data, output STRICT JSON (only the JSON) with exact fields:\n" +
+              "headline: string (<=11 words, a decisive strategic verdict — institutional, not cute),\n" +
+              "summary: string (2-3 sentences of DENSE ANALYTICAL SYNTHESIS — assess acceleration, adoption, durability vs hype; cite the real numbers/repos),\n" +
+              "roadmap: array of 4 {phase:int, title:string, duration:string, objectives:string[3], resources:string[1-2]} — phases: Fundamentals, Ecosystem, Live Engineering, Career Optimization,\n" +
               "projects: array of 3 {title:string, difficulty:1|2|3, why:string} ordered easy->hard,\n" +
-              "insights: string[3] — real takeaways grounded in the community discussions and trend data,\n" +
-              "trend_note: string (one sentence on career/research demand).\n" +
-              "Cite actual repos/papers/tools from the facts. Be specific. No hedging, no 'consider'.",
+              "insights: string[3] — high-conviction strategic conclusions grounded in community friction + trend data,\n" +
+              "trend_note: string (one institutional sentence on market durability / commercial viability).\n\n" +
+              "TONE: strategic, precise, institutional, high-agency, research-grade. The reader must feel EMPOWERED, not educated.\n" +
+              "BANNED PHRASES: 'here are some resources', 'you may want to', 'this could help', 'I think', 'consider', 'in conclusion'.\n" +
+              "REQUIRED STYLE example: 'Rust demonstrates sustained infrastructure acceleration driven by concurrent increases in systems-level startup adoption, repository velocity, and high-trust backend tooling migration patterns.'",
           },
           { role: "user", content: JSON.stringify({ intent, facts }, null, 2) },
         ],
@@ -105,6 +108,7 @@ function extractFacts(intent: Intent, r: Record<string, NodeResult>, m: CompileM
   return {
     topic: intent.topic, level: intent.level, goal: intent.goal, timeframe: intent.timeframe,
     field_velocity: m.field_velocity, trajectory: m.trajectory, artifacts_found: m.artifacts_found,
+    ecosystem_state: m.ecosystem_state, confidence: m.confidence, confidence_label: m.confidence_label,
     context_summary: context?.summary,
     top_papers:    papers.slice(0, 3).map((p) => ({ title: p.title, year: p.year, authors: p.authors.slice(0, 2) })),
     top_repos:     repos.slice(0, 3).map((r) => ({ name: r.full_name, stars: r.stars, lang: r.language, desc: r.description })),
@@ -135,18 +139,20 @@ function template(intent: Intent, f: ReturnType<typeof extractFacts>): Synthesis
     { title: `Production-ready ${t} tool, open-sourced`, difficulty: 3, why: "A portfolio piece that proves depth and ships real value." },
   ];
 
+  const accel = f.trajectory === "rising" ? "sustained acceleration" : f.trajectory === "declining" ? "decelerating adoption" : "stable consolidation";
+  const topStars = f.top_repos[0]?.stars ? `${f.top_repos[0].stars.toLocaleString()}-star ${f.top_repos[0].name}` : "open-source tooling";
   return {
-    headline:   `${t}: ${f.field_velocity}/100 field velocity — ${f.trajectory}.`,
-    summary:    `${f.context_summary ?? `${t} sits at the intersection of research and engineering.`} Compiled from ${f.artifacts_found} live artifacts across papers, repos, and community — here is your ${intent.timeframe} path.`,
+    headline:   `${t}: ${f.ecosystem_state} ecosystem, ${f.field_velocity}/100 velocity.`,
+    summary:    `${t} demonstrates ${accel} across ${f.artifacts_found} reconciled signals — repository gravity (${topStars}), publication cadence, and practitioner discourse converge on a ${f.confidence >= 70 ? "high-confidence" : "provisional"} intelligence profile. ${f.context_summary ? f.context_summary.slice(0, 160) : ""}`,
     roadmap,
     projects,
     insights: [
-      f.discussions[0]?.title ? `The community keeps returning to: "${f.discussions[0].title}".` : `Nail the fundamentals of ${t} before chasing advanced tricks.`,
-      f.hot_tools.length ? `The tools that actually matter right now: ${f.hot_tools.join(", ")}.` : `Pick one tool and go deep before spreading wide.`,
-      `Field signal is ${f.trajectory} — ${f.trajectory === "rising" ? "a great time to skill up here." : "stable, dependable demand."}`,
+      f.discussions[0]?.title ? `Practitioner discourse concentrates on "${f.discussions[0].title}" — a leading indicator of where production friction and demand intersect.` : `${t} adoption is gated by fundamentals; depth precedes leverage in this ecosystem.`,
+      f.hot_tools.length ? `Tooling consolidation favours ${f.hot_tools.join(", ")} — the migration surface where engineering effort compounds.` : `Tooling remains fragmented; early standardisation carries disproportionate strategic value.`,
+      `Signal reconciliation reports ${f.trajectory} trajectory at ${f.confidence}% confidence — ${f.trajectory === "rising" ? "a durable acceleration window, not a hype spike." : f.trajectory === "declining" ? "pair with a modern successor to preserve relevance." : "mature infrastructure with dependable, non-speculative demand."}`,
     ],
     trend_note: f.trajectory === "rising"
-      ? `${t} has rapidly growing demand — YC names include ${f.yc_companies.join(", ")}.`
-      : `${t} carries steady, reliable demand across the industry.`,
+      ? `Commercial viability is corroborated by venture placement (${f.yc_companies.join(", ")}) and accelerating repository velocity — durable, not speculative.`
+      : `${t} represents stable, production-grade infrastructure with consistent enterprise demand.`,
   };
 }

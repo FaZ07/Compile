@@ -83,6 +83,14 @@ export interface NodeResult<T = unknown> {
 }
 
 // ── compile metrics (the comparative "analyze" surface) ─────────
+export interface VelocityFactor {
+  label: string;   // "GitHub star acceleration"
+  value: number;   // normalized 0-100
+  weight: number;  // contribution weight (sums to 1)
+}
+
+export type EcosystemState = "Dormant" | "Stable" | "Growing" | "Explosive";
+
 export interface CompileMetrics {
   sources_queried: number;
   sources_live: number;
@@ -90,8 +98,12 @@ export interface CompileMetrics {
   artifacts_found: number;
   total_latency_ms: number;
   fastest_ms: number;
-  field_velocity: number;  // 0-100 derived score
+  field_velocity: number;          // 0-100 weighted synthesis
   trajectory: Trajectory;
+  ecosystem_state: EcosystemState; // threshold interpretation
+  breakdown: VelocityFactor[];     // the weighted components
+  confidence: number;              // 0-100 intelligence confidence
+  confidence_label: string;        // "MULTI-SOURCE CONSENSUS CONFIRMED" etc.
 }
 
 // ── synthesis ───────────────────────────────────────────────────
@@ -123,11 +135,13 @@ export type Stage = "parse" | "compile" | "fetch" | "metrics" | "synthesize" | "
 
 export type CompileEvent =
   | { type: "stage";      stage: Stage }
+  | { type: "status";     payload: string }       // industrial live-compile line
   | { type: "intent";     intent: Intent }
   | { type: "dag";        nodes: NodeId[] }
   | { type: "node:start"; id: NodeId }
   | { type: "node:done";  id: NodeId; result: NodeResult }
   | { type: "fact";       fact: string }
+  | { type: "metric_tick"; payload: number }       // live field-velocity ramp
   | { type: "metrics";    metrics: CompileMetrics }
   | { type: "synthesis";  synthesis: Synthesis }
   | { type: "error";      message: string };

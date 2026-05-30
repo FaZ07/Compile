@@ -129,9 +129,10 @@ export default function RealityGraph({ nodes, states, phase }: Props) {
       const t = clock.getElapsedTime(); const dt = Math.min(clock.getDelta(), 0.05);
       const ph = phaseRef.current; const latest = statesRef.current;
 
-      core.rotation.y += dt * 0.16; core.rotation.x = Math.sin(t * 0.3) * 0.06;
-      coreMesh.scale.setScalar(1 + Math.sin(t * 1.5) * 0.03);
-      (shell.material as THREE.LineBasicMaterial).opacity = 0.6 + Math.sin(t * 2) * 0.25;
+      const compilingNow = ph === "compiling";
+      core.rotation.y += dt * (compilingNow ? 0.5 : 0.16); core.rotation.x = Math.sin(t * 0.3) * 0.06;
+      coreMesh.scale.setScalar(1 + Math.sin(t * (compilingNow ? 4 : 1.5)) * (compilingNow ? 0.07 : 0.03));
+      (shell.material as THREE.LineBasicMaterial).opacity = 0.55 + Math.sin(t * (compilingNow ? 5 : 2)) * 0.3;
 
       for (const n of built) {
         const want = (latest[n.id] as NodeState | undefined) ?? "idle";
@@ -147,14 +148,18 @@ export default function RealityGraph({ nodes, states, phase }: Props) {
 
         const lmat = n.line.material as THREE.LineBasicMaterial;
         lmat.color.lerp(n.state === "running" ? STAMP : INK, 0.1);
-        lmat.opacity = THREE.MathUtils.lerp(lmat.opacity, n.state === "running" ? 0.9 : n.state === "done" ? 0.45 : 0.28, 0.1);
+        const idlePulse = compilingNow ? 0.34 + Math.sin(t * 3 + n.angle * 2) * 0.22 : 0.28;
+        lmat.opacity = THREE.MathUtils.lerp(lmat.opacity, n.state === "running" ? 0.92 : n.state === "done" ? 0.45 : idlePulse, 0.1);
 
+        // edges fire continuously while compiling — data ingested source → core
+        const flowing = compilingNow || n.state === "running";
         const pmat = n.particles.material as THREE.PointsMaterial;
-        pmat.opacity = THREE.MathUtils.lerp(pmat.opacity, n.state === "running" ? 0.95 : 0, 0.1);
-        if (n.state === "running") {
+        pmat.opacity = THREE.MathUtils.lerp(pmat.opacity, n.state === "running" ? 1 : compilingNow ? 0.6 : 0, 0.12);
+        if (flowing) {
           const arr = n.particles.geometry.attributes.position as THREE.BufferAttribute;
+          const speed = n.state === "running" ? 0.95 : 0.5;
           for (let k = 0; k < arr.count; k++) {
-            const prog = ((t * 0.7) + k / arr.count) % 1;
+            const prog = 1 - (((t * speed) + k / arr.count) % 1); // source → core
             arr.setXYZ(k, Math.cos(n.angle) * RADIUS * prog, 0, Math.sin(n.angle) * RADIUS * prog);
           }
           arr.needsUpdate = true;
@@ -162,9 +167,12 @@ export default function RealityGraph({ nodes, states, phase }: Props) {
       }
 
       const dest = ph === "complete" ? camDone : ph === "idle" ? camIdle : camWork;
-      const swing = ph === "idle" ? 1.4 : 0.5, rate = ph === "idle" ? 0.1 : 0.16;
+      const swing = ph === "idle" ? 1.4 : compilingNow ? 1.1 : 0.5;
+      const rate  = ph === "idle" ? 0.1 : compilingNow ? 0.22 : 0.16;
       camera.position.lerp(new THREE.Vector3(
-        dest.x + Math.sin(t * rate) * swing, dest.y, dest.z + Math.cos(t * rate) * swing,
+        dest.x + Math.sin(t * rate) * swing,
+        dest.y + (compilingNow ? Math.sin(t * 0.5) * 0.4 : 0),
+        dest.z + Math.cos(t * rate) * swing,
       ), 0.025);
       camera.lookAt(lookTarget);
 

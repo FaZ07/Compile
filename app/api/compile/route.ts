@@ -1,20 +1,22 @@
-import { parseIntent }      from "@/lib/intent";
-import { compileDAG }       from "@/lib/dag";
-import { fetchWiki }        from "@/lib/nodes/wiki";
-import { fetchPapers }      from "@/lib/nodes/papers";
-import { fetchRepos }       from "@/lib/nodes/repos";
-import { fetchTutorials }   from "@/lib/nodes/tutorials";
-import { fetchDiscussions }  from "@/lib/nodes/discussions";
-import { fetchTrends }      from "@/lib/nodes/trends";
-import { synthesize }       from "@/lib/synthesize";
-import { SSEStream }        from "@/lib/sse";
+// THE ORCHESTRATOR
+// parse → compile DAG → fire all source adapters in parallel → compute metrics
+// → synthesize → done. Every step streams over SSE so the 3D graph + console
+// react in real time. One source failing never kills the compile.
+
+import { parseIntent }  from "@/lib/intent";
+import { compileDAG, flattenDAG } from "@/lib/dag";
+import { ADAPTERS, type SourceContext } from "@/lib/sources";
+import { computeMetrics } from "@/lib/metrics";
+import { synthesize } from "@/lib/synthesize";
+import { pickFacts } from "@/lib/facts";
+import { SSEStream } from "@/lib/sse";
 import type { Level, Goal, NodeId, NodeResult } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  let body: { intention?: string; level?: Level; goal?: Goal };
+  let body: { intention?: string; level?: Level; goal?: Goal; timeframe?: string };
   try { body = await req.json(); }
   catch { return new Response("bad json", { status: 400 }); }
 
@@ -25,39 +27,42 @@ export async function POST(req: Request) {
     async start(controller) {
       const sse = new SSEStream(controller);
       try {
-        // Stage 1: parse intent
+        // 1 — parse
         sse.send({ type: "stage", stage: "parse" });
-        const intent = await parseIntent(text, { level: body.level, goal: body.goal });
+        const intent = await parseIntent(text, { level: body.level, goal: body.goal, timeframe: body.timeframe });
         sse.send({ type: "intent", intent });
 
-        // Stage 2: compile DAG
+        // 2 — compile DAG
         sse.send({ type: "stage", stage: "compile" });
-        const dag  = compileDAG(intent);
-        const flat = dag.flatMap((s) => s.nodes) as NodeId[];
-        sse.send({ type: "dag", nodes: flat });
+        const nodes = flattenDAG(compileDAG(intent));
+        sse.send({ type: "dag", nodes });
 
-        // Stage 3: fire all 6 sources in parallel
+        // 3 — fetch (all adapters in parallel) + drip cute facts while we wait
         sse.send({ type: "stage", stage: "fetch" });
+        const facts = pickFacts(4);
+        let fi = 0;
+        const factTimer = setInterval(() => {
+          if (fi < facts.length) sse.send({ type: "fact", fact: facts[fi++] });
+        }, 1400);
+
+        const ctx: SourceContext = { topic: intent.topic, level: intent.level, goal: intent.goal };
         const results: Record<string, NodeResult> = {};
+        await Promise.all(ADAPTERS.map((a) => runNode(a.id, sse, results, () => a.run(ctx))));
+        clearInterval(factTimer);
 
-        await Promise.all([
-          runNode("wiki",        sse, results, () => fetchWiki(intent.topic)),
-          runNode("papers",      sse, results, () => fetchPapers(intent.topic)),
-          runNode("repos",       sse, results, () => fetchRepos(intent.topic, intent.level)),
-          runNode("tutorials",   sse, results, () => fetchTutorials(intent.topic)),
-          runNode("discussions", sse, results, () => fetchDiscussions(intent.topic)),
-          runNode("trends",      sse, results, () => fetchTrends(intent.topic, intent.goal)),
-        ]);
+        // 4 — metrics
+        sse.send({ type: "stage", stage: "metrics" });
+        const metrics = computeMetrics(results);
+        sse.send({ type: "metrics", metrics });
 
-        // Stage 4: synthesize
+        // 5 — synthesize
         sse.send({ type: "stage", stage: "synthesize" });
-        const synthesis = await synthesize(intent, results);
+        const synthesis = await synthesize(intent, results, metrics);
         sse.send({ type: "synthesis", synthesis });
 
         sse.send({ type: "stage", stage: "done" });
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "compile failed";
-        console.error("[compile]", msg);
+        console.error("[compile]", err instanceof Error ? err.message : err);
         sse.send({ type: "error", message: "Compilation interrupted. Try again." });
       } finally {
         sse.close();
@@ -67,27 +72,31 @@ export async function POST(req: Request) {
 
   return new Response(stream, {
     headers: {
-      "Content-Type":    "text/event-stream",
-      "Cache-Control":   "no-cache, no-transform",
-      Connection:        "keep-alive",
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
       "X-Accel-Buffering": "no",
     },
   });
 }
 
-async function runNode<T>(id: NodeId, sse: SSEStream, store: Record<string, NodeResult>, fn: () => Promise<T>): Promise<NodeResult<T>> {
+// runs one adapter: emits start, times it, captures data+count, emits done.
+async function runNode(
+  id: NodeId,
+  sse: SSEStream,
+  store: Record<string, NodeResult>,
+  fn: () => Promise<{ data: unknown; count: number }>,
+): Promise<void> {
   const t0 = Date.now();
   sse.send({ type: "node:start", id });
   try {
-    const data   = await fn();
-    const result: NodeResult<T> = { id, ok: true,  duration_ms: Date.now() - t0, data };
-    store[id]    = result as NodeResult;
-    sse.send({ type: "node:done", id, result: result as NodeResult });
-    return result;
+    const { data, count } = await fn();
+    const result: NodeResult = { id, ok: true, duration_ms: Date.now() - t0, count, data };
+    store[id] = result;
+    sse.send({ type: "node:done", id, result });
   } catch (err) {
-    const result: NodeResult<T> = { id, ok: false, duration_ms: Date.now() - t0, error: err instanceof Error ? err.message : "unknown" };
-    store[id]    = result as NodeResult;
-    sse.send({ type: "node:done", id, result: result as NodeResult });
-    return result;
+    const result: NodeResult = { id, ok: false, duration_ms: Date.now() - t0, count: 0, error: err instanceof Error ? err.message : "unknown" };
+    store[id] = result;
+    sse.send({ type: "node:done", id, result });
   }
 }

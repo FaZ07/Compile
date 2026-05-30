@@ -1,14 +1,16 @@
+// Compile an Intent into an execution DAG. All six sources are independent,
+// so they fire in a single parallel stage. (Kept as a stage list so the shape
+// can grow into gated multi-stage graphs without touching the orchestrator.)
+
 import type { Intent, NodeId } from "./types";
+import { NODE_ORDER } from "./types";
 
 export interface DagStage { stage: number; nodes: NodeId[] }
 
 export function compileDAG(_intent: Intent): DagStage[] {
-  // All nodes fire in parallel — no location-gating needed for research
-  return [
-    { stage: 1, nodes: ["wiki", "papers", "repos", "tutorials", "discussions", "trends"] },
-  ];
+  return [{ stage: 1, nodes: [...NODE_ORDER] }];
 }
 
-export function dagNodes(stages: DagStage[]): NodeId[] {
+export function flattenDAG(stages: DagStage[]): NodeId[] {
   return stages.flatMap((s) => s.nodes);
 }

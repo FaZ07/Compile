@@ -1,117 +1,100 @@
-// COMPILE — ResearchOS types. Shared across SSE protocol and UI.
+// COMPILE — data contracts. Everything (SSE protocol, sources, UI) agrees here.
 
-export type NodeId =
-  | "wiki"
-  | "papers"
-  | "repos"
-  | "tutorials"
-  | "discussions"
-  | "trends";
+export type NodeId = "context" | "papers" | "code" | "tutorials" | "community" | "trends";
 
-export interface NodeMeta {
+export interface SourceMeta {
   id: NodeId;
-  label: string;
-  source: string;
-  real: boolean;
-  angleOrder: number;
+  label: string;   // shown on the 3D node + section header
+  source: string;  // brand name
+  live: boolean;   // hits a real public API right now
+  accent: "cyan" | "gold";
+  order: number;   // ring position in the constellation
 }
 
-export const NODE_REGISTRY: Record<NodeId, NodeMeta> = {
-  wiki:        { id: "wiki",        label: "Context",   source: "Wikipedia",              real: true,  angleOrder: 0 },
-  papers:      { id: "papers",      label: "Papers",    source: "arXiv",                  real: true,  angleOrder: 1 },
-  repos:       { id: "repos",       label: "Code",      source: "GitHub",                 real: true,  angleOrder: 2 },
-  tutorials:   { id: "tutorials",   label: "Tutorials", source: "DEV.to + YouTube *",     real: false, angleOrder: 3 },
-  discussions: { id: "discussions", label: "Community", source: "Reddit + HN",            real: true,  angleOrder: 4 },
-  trends:      { id: "trends",      label: "Trends",    source: "PH + YC + TechCrunch *", real: false, angleOrder: 5 },
+export const SOURCES: Record<NodeId, SourceMeta> = {
+  context:   { id: "context",   label: "Context",   source: "Wikipedia",        live: true,  accent: "cyan", order: 0 },
+  papers:    { id: "papers",    label: "Research",  source: "arXiv",            live: true,  accent: "cyan", order: 1 },
+  code:      { id: "code",      label: "Code",      source: "GitHub",           live: true,  accent: "gold", order: 2 },
+  tutorials: { id: "tutorials", label: "Tutorials", source: "DEV.to",           live: true,  accent: "cyan", order: 3 },
+  community: { id: "community", label: "Community", source: "Reddit + HN",      live: true,  accent: "gold", order: 4 },
+  trends:    { id: "trends",    label: "Trends",    source: "YC · PH · TechCrunch", live: false, accent: "gold", order: 5 },
 };
 
+export const NODE_ORDER: NodeId[] = (Object.values(SOURCES) as SourceMeta[])
+  .sort((a, b) => a.order - b.order)
+  .map((s) => s.id);
+
+// ── intent ──────────────────────────────────────────────────────
 export type Level = "beginner" | "intermediate" | "advanced";
-export type Goal  = "learn" | "research" | "build" | "career" | "startup";
+export type Goal  = "learn" | "build" | "research" | "career" | "startup";
 
 export interface Intent {
   raw: string;
   topic: string;
   level: Level;
   goal: Goal;
-  focus: string[];      // e.g. ["theory", "implementation", "papers"]
-  timeframe: string;    // "1 week", "1 month", "3 months"
+  timeframe: string;  // "1 week" | "1 month" | "3 months" | "weekend"
+  focus: string[];    // ["theory","implementation","papers",...]
 }
 
-// ---- Node payloads ----------------------------------------
-
-export interface WikiData {
-  title: string;
-  summary: string;
-  url: string;
-}
+// ── source payloads ─────────────────────────────────────────────
+export interface ContextData { title: string; summary: string; url: string }
 
 export interface Paper {
-  title: string;
-  authors: string[];
-  year: number;
-  abstract: string;
-  url: string;
-  source: "arXiv" | "Semantic Scholar";
+  title: string; authors: string[]; year: number;
+  abstract: string; url: string; category: string;
 }
 
 export interface Repo {
-  name: string;
-  full_name: string;
-  description: string;
-  stars: number;
-  language: string;
-  url: string;
-  topics: string[];
-  updated: string;
+  name: string; full_name: string; description: string;
+  stars: number; language: string; url: string;
+  topics: string[]; updated: string; pushed_days_ago: number;
 }
 
 export interface Tutorial {
-  title: string;
-  author: string;
-  platform: "DEV.to" | "YouTube" | "Medium";
-  url: string;
-  tags: string[];
-  published: string;
-  read_time_min?: number;
-  views?: number;
+  title: string; author: string; platform: "DEV.to" | "YouTube" | "Medium";
+  url: string; tags: string[]; published: string;
+  read_min?: number; reactions?: number; views?: number;
 }
 
-export interface DiscussionPost {
-  title: string;
-  source: "Reddit" | "HN";
-  url: string;
-  score: number;
-  comments: number;
-  snippet: string;
+export interface Discussion {
+  title: string; source: "Reddit" | "HN"; url: string;
+  score: number; comments: number; snippet: string;
 }
 
-export interface TrendSignal {
-  domain: string;
-  trajectory: "rising" | "stable" | "declining";
+export interface TrendData {
+  trajectory: Trajectory;
   note: string;
   hot_tools: string[];
-  yc_companies: string[];
-  ph_launches: string[];
+  companies: string[];   // YC-style
+  launches: string[];    // Product Hunt-style
 }
 
-export type NodePayload =
-  | { id: "wiki";        data: WikiData }
-  | { id: "papers";      data: Paper[] }
-  | { id: "repos";       data: Repo[] }
-  | { id: "tutorials";   data: Tutorial[] }
-  | { id: "discussions"; data: DiscussionPost[] }
-  | { id: "trends";      data: TrendSignal };
+export type Trajectory = "rising" | "stable" | "declining";
 
+// ── node result envelope ────────────────────────────────────────
 export interface NodeResult<T = unknown> {
   id: NodeId;
   ok: boolean;
   duration_ms: number;
+  count: number;    // how many artifacts this source returned
   data?: T;
   error?: string;
 }
 
-// ---- Synthesis ----------------------------------------
+// ── compile metrics (the comparative "analyze" surface) ─────────
+export interface CompileMetrics {
+  sources_queried: number;
+  sources_live: number;
+  sources_ok: number;
+  artifacts_found: number;
+  total_latency_ms: number;
+  fastest_ms: number;
+  field_velocity: number;  // 0-100 derived score
+  trajectory: Trajectory;
+}
 
+// ── synthesis ───────────────────────────────────────────────────
 export interface RoadmapPhase {
   phase: number;
   title: string;
@@ -120,29 +103,31 @@ export interface RoadmapPhase {
   resources: string[];
 }
 
+export interface ProjectIdea {
+  title: string;
+  difficulty: 1 | 2 | 3;  // starter / intermediate / advanced
+  why: string;
+}
+
 export interface Synthesis {
   headline: string;
   summary: string;
   roadmap: RoadmapPhase[];
-  projects: string[];
+  projects: ProjectIdea[];
   insights: string[];
-  trend: "rising" | "stable" | "declining";
   trend_note: string;
 }
 
-export interface Verification {
-  source: string;
-  claim: string;
-  link?: string;
-}
-
-// ---- Wire SSE protocol ----------------------------------------
+// ── SSE protocol ────────────────────────────────────────────────
+export type Stage = "parse" | "compile" | "fetch" | "metrics" | "synthesize" | "done";
 
 export type CompileEvent =
-  | { type: "stage";     stage: "parse" | "compile" | "fetch" | "synthesize" | "done" }
-  | { type: "intent";    intent: Intent }
-  | { type: "dag";       nodes: NodeId[] }
+  | { type: "stage";      stage: Stage }
+  | { type: "intent";     intent: Intent }
+  | { type: "dag";        nodes: NodeId[] }
   | { type: "node:start"; id: NodeId }
   | { type: "node:done";  id: NodeId; result: NodeResult }
-  | { type: "synthesis"; synthesis: Synthesis }
-  | { type: "error";     message: string };
+  | { type: "fact";       fact: string }
+  | { type: "metrics";    metrics: CompileMetrics }
+  | { type: "synthesis";  synthesis: Synthesis }
+  | { type: "error";      message: string };

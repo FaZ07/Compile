@@ -1,18 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-
-const display = Fraunces({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "900"],
-  style: ["normal", "italic"],
-  variable: "--font-display",
-  display: "swap",
-});
 
 const sans = Hanken_Grotesk({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-sans",
   display: "swap",
 });
@@ -25,20 +17,20 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "COMPILE — say what you want. the internet bends.",
+  title: "COMPILE — the reality compiler for learning",
   description:
-    "An intention compiler. Type a goal; COMPILE reads the live internet across seven sources in parallel and returns one executable reality. Powered by Anakin Wire.",
+    "Say what you want to learn. COMPILE fires papers, code, tutorials, community, and trends across the live internet in parallel, then reconciles one executable knowledge plan — with real-time comparative metrics. Powered by Anakin Wire + Groq.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#050505",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Venture Past Our Sky — Across the Universe</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ['Instrument Serif', 'serif'],
+            body: ['Barlow', 'sans-serif'],
+          },
+          borderRadius: { DEFAULT: '9999px' },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    html, body { background: #000; margin: 0; padding: 0; font-family: 'Barlow', sans-serif; color: #fff; }
+    * { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    ::selection { background: rgba(255,255,255,0.2); }
+
+    .liquid-glass {
+      background: rgba(255, 255, 255, 0.01);
+      background-blend-mode: luminosity;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: none;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .liquid-glass::before {
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      padding: 1.4px;
+      background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.45) 0%,
+        rgba(255, 255, 255, 0.15) 20%,
+        rgba(255, 255, 255, 0) 40%,
+        rgba(255, 255, 255, 0) 60%,
+        rgba(255, 255, 255, 0.15) 80%,
+        rgba(255, 255, 255, 0.45) 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      pointer-events: none;
+    }
+    .liquid-glass-strong {
+      background: rgba(255, 255, 255, 0.01);
+      background-blend-mode: luminosity;
+      backdrop-filter: blur(50px);
+      -webkit-backdrop-filter: blur(50px);
+      border: none;
+      box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .liquid-glass-strong::before {
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      padding: 1.4px;
+      background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.5) 0%,
+        rgba(255, 255, 255, 0.2) 20%,
+        rgba(255, 255, 255, 0) 40%,
+        rgba(255, 255, 255, 0) 60%,
+        rgba(255, 255, 255, 0.2) 80%,
+        rgba(255, 255, 255, 0.5) 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    /* ------- Entrance animations (replace framer-motion w/ CSS) ------- */
+    @keyframes blurFadeUp {
+      0%   { filter: blur(10px); opacity: 0; transform: translateY(20px); }
+      100% { filter: blur(0);    opacity: 1; transform: translateY(0); }
+    }
+    .blur-in {
+      opacity: 0;
+      animation: blurFadeUp 0.7s ease-out forwards;
+      animation-delay: var(--delay, 0s);
+    }
+
+    /* Word-by-word blur-in for headlines. Spec exactly: 3-step keyframes,
+       delay = i * 100ms via inline --i. */
+    @keyframes blurFadeWord {
+      0%   { filter: blur(10px); opacity: 0;   transform: translateY(50px); }
+      50%  { filter: blur(5px);  opacity: 0.5; transform: translateY(-5px); }
+      100% { filter: blur(0);    opacity: 1;   transform: translateY(0); }
+    }
+    .blur-word {
+      display: inline-block;
+      margin-right: 0.28em;
+      opacity: 0;
+      animation: blurFadeWord 0.7s ease-out forwards;
+      animation-delay: calc(var(--i, 0) * 100ms);
+      animation-play-state: paused;
+    }
+    .blur-text.is-visible .blur-word { animation-play-state: running; }
+    .blur-text {
+      display: flex; flex-wrap: wrap; justify-content: center; row-gap: 0.1em;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    /* ────────────────────────── icons ────────────────────────── */
+    function ArrowUpRight({ className = "h-5 w-5" }) {
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+          <line x1="7" y1="17" x2="17" y2="7" />
+          <polyline points="7 7 17 7 17 17" />
+        </svg>
+      );
+    }
+    function Play({ className = "h-4 w-4" }) {
+      return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+          <polygon points="6 4 20 12 6 20 6 4" />
+        </svg>
+      );
+    }
+    function ClockOutline({ className = "h-7 w-7" }) {
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+          <circle cx="12" cy="12" r="9.5" />
+          <polyline points="12 6.5 12 12 16.5 14.5" />
+        </svg>
+      );
+    }
+    function GlobeOutline({ className = "h-7 w-7" }) {
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+          <circle cx="12" cy="12" r="9.5" />
+          <line x1="2.5" y1="12" x2="21.5" y2="12" />
+          <path d="M12 2.5a15 15 0 0 1 4 9.5 15 15 0 0 1-4 9.5 15 15 0 0 1-4-9.5 15 15 0 0 1 4-9.5z" />
+        </svg>
+      );
+    }
+    function MatImage({ className = "h-6 w-6" }) {
+      return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+          <path d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21H5Zm1-4h12l-3.75-5-3 4L9 13l-3 4Z"/>
+        </svg>
+      );
+    }
+    function MatMovie({ className = "h-6 w-6" }) {
+      return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+          <path d="M4 6.47 5.76 10H20v8H4V6.47M22 4h-4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.89-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4Z"/>
+        </svg>
+      );
+    }
+    function MatLight({ className = "h-6 w-6" }) {
+      return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+          <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1Zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7Z"/>
+        </svg>
+      );
+    }
+
+    /* ────────────────────────── BlurIn wrapper (CSS) ────────────────────────── */
+    function BlurIn({ delay = 0, children, className = "" }) {
+      return (
+        <div className={`blur-in ${className}`} style={{ "--delay": `${delay}s` }}>
+          {children}
+        </div>
+      );
+    }
+
+    /* ────────────────────────── FadingVideo (rAF crossfade) ────────────────────────── */
+    function FadingVideo({ src, className, style }) {
+      const videoRef = useRef(null);
+      const rafRef = useRef(null);
+      const fadingOutRef = useRef(false);
+      const FADE_MS = 500;
+      const FADE_OUT_LEAD = 0.55;
+
+      const fadeTo = useCallback((target, duration) => {
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        const v = videoRef.current;
+        if (!v) return;
+        const start = parseFloat(v.style.opacity || "0") || 0;
+        const t0 = performance.now();
+        const step = (now) => {
+          const t = Math.min((now - t0) / duration, 1);
+          v.style.opacity = String(start + (target - start) * t);
+          if (t < 1) rafRef.current = requestAnimationFrame(step);
+        };
+        rafRef.current = requestAnimationFrame(step);
+      }, []);
+
+      useEffect(() => {
+        const v = videoRef.current;
+        if (!v) return;
+        v.style.opacity = "0";
+
+        const onLoaded = () => {
+          v.style.opacity = "0";
+          const p = v.play(); if (p && p.catch) p.catch(() => {});
+          fadeTo(1, FADE_MS);
+        };
+        const onTimeUpdate = () => {
+          if (fadingOutRef.current) return;
+          const remaining = v.duration - v.currentTime;
+          if (!isFinite(remaining)) return;
+          if (remaining <= FADE_OUT_LEAD && remaining > 0) {
+            fadingOutRef.current = true;
+            fadeTo(0, FADE_OUT_LEAD * 1000);
+          }
+        };
+        const onEnded = () => {
+          v.style.opacity = "0";
+          setTimeout(() => {
+            v.currentTime = 0;
+            const p = v.play(); if (p && p.catch) p.catch(() => {});
+            fadingOutRef.current = false;
+            fadeTo(1, FADE_MS);
+          }, 100);
+        };
+
+        v.addEventListener("loadeddata", onLoaded);
+        v.addEventListener("timeupdate", onTimeUpdate);
+        v.addEventListener("ended", onEnded);
+
+        return () => {
+          if (rafRef.current) cancelAnimationFrame(rafRef.current);
+          v.removeEventListener("loadeddata", onLoaded);
+          v.removeEventListener("timeupdate", onTimeUpdate);
+          v.removeEventListener("ended", onEnded);
+        };
+      }, [fadeTo, src]);
+
+      return (
+        <video
+          ref={videoRef}
+          src={src}
+          className={className}
+          style={{ opacity: 0, ...style }}
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+        />
+      );
+    }
+
+    /* ────────────────────────── BlurText (IntersectionObserver-triggered) ────────────────────────── */
+    function BlurText({ text, className = "", style = {} }) {
+      const ref = useRef(null);
+      const words = text.split(" ");
+
+      useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                el.classList.add("is-visible");
+                io.disconnect();
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+        io.observe(el);
+        return () => io.disconnect();
+      }, []);
+
+      return (
+        <p ref={ref} className={`blur-text ${className}`} style={style}>
+          {words.map((w, i) => (
+            <span key={i} className="blur-word" style={{ "--i": i }}>
+              {w}
+            </span>
+          ))}
+        </p>
+      );
+    }
+
+    /* ────────────────────────── Navbar ────────────────────────── */
+    function Navbar() {
+      const links = ["Home", "Voyages", "Worlds", "Innovation", "Plan Launch"];
+      return (
+        <nav className="fixed top-4 inset-x-0 z-50 px-8 lg:px-16 flex items-center justify-between">
+          <div className="liquid-glass rounded-full" style={{ width: 48, height: 48 }}>
+            <div className="absolute inset-0 grid place-items-center">
+              <span className="font-heading italic text-white text-2xl lowercase leading-none">a</span>
+            </div>
+          </div>
+
+          <div className="hidden lg:flex liquid-glass rounded-full px-1.5 py-1.5 items-center gap-0.5">
+            {links.map((l) => (
+              <a key={l} href="#" className="px-3 py-2 text-sm font-medium text-white/90 font-body hover:text-white transition-colors">
+                {l}
+              </a>
+            ))}
+            <button className="ml-1 flex items-center gap-1.5 bg-white text-black rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap">
+              Claim a Spot <ArrowUpRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div style={{ width: 48, height: 48 }} aria-hidden />
+        </nav>
+      );
+    }
+
+    /* ────────────────────────── Hero ────────────────────────── */
+    const HERO_VIDEO =
+      "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_080021_d598092b-c4c2-4e53-8e46-94cf9064cd50.mp4";
+
+    function Hero() {
+      return (
+        <section className="relative h-screen w-full overflow-hidden bg-black">
+          <FadingVideo
+            src={HERO_VIDEO}
+            className="absolute left-1/2 top-0 -translate-x-1/2 object-cover object-top z-0"
+            style={{ width: "120%", height: "120%" }}
+          />
+
+          <div className="relative z-10 flex h-full flex-col">
+            <Navbar />
+
+            <div className="flex-1 flex flex-col items-center justify-center text-center pt-24 px-4">
+              <BlurIn delay={0.4}>
+                <div className="liquid-glass rounded-full inline-flex items-center gap-2 pr-3">
+                  <span className="bg-white text-black px-3 py-1 text-xs font-semibold rounded-full">New</span>
+                  <span className="text-sm text-white/90 font-body">Maiden Crewed Voyage to Mars Arrives 2026</span>
+                </div>
+              </BlurIn>
+
+              <BlurText
+                text="Venture Past Our Sky Across the Universe"
+                className="mt-6 text-6xl md:text-7xl lg:text-[5.5rem] font-heading italic text-white leading-[0.8] max-w-2xl mx-auto"
+                style={{ letterSpacing: "-4px" }}
+              />
+
+              <BlurIn delay={0.8} className="mt-4 max-w-2xl">
+                <p className="text-sm md:text-base text-white max-w-2xl font-body font-light leading-tight">
+                  Discover the universe in ways once unimaginable. Our pioneering vessels and breakthrough engineering bring deep-space exploration within reach—secure and extraordinary.
+                </p>
+              </BlurIn>
+
+              <BlurIn delay={1.1}>
+                <div className="flex items-center gap-6 mt-6">
+                  <button className="liquid-glass-strong rounded-full px-5 py-2.5 text-sm font-medium text-white inline-flex items-center gap-2">
+                    Start Your Voyage <ArrowUpRight className="h-5 w-5" />
+                  </button>
+                  <button className="text-white text-sm font-medium inline-flex items-center gap-2 font-body">
+                    View Liftoff <Play className="h-4 w-4" />
+                  </button>
+                </div>
+              </BlurIn>
+
+              <BlurIn delay={1.3}>
+                <div className="flex items-stretch gap-4 mt-8">
+                  <div className="liquid-glass p-5 rounded-[1.25rem]" style={{ width: 220 }}>
+                    <div className="text-white inline-block"><ClockOutline className="w-7 h-7" /></div>
+                    <div className="mt-3 text-4xl font-heading italic text-white leading-none" style={{ letterSpacing: "-1px" }}>34.5 Min</div>
+                    <div className="text-xs text-white font-body font-light mt-2">Average Videos Watch Time</div>
+                  </div>
+                  <div className="liquid-glass p-5 rounded-[1.25rem]" style={{ width: 220 }}>
+                    <div className="text-white inline-block"><GlobeOutline className="w-7 h-7" /></div>
+                    <div className="mt-3 text-4xl font-heading italic text-white leading-none" style={{ letterSpacing: "-1px" }}>2.8B+</div>
+                    <div className="text-xs text-white font-body font-light mt-2">Users Across the Globe</div>
+                  </div>
+                </div>
+              </BlurIn>
+            </div>
+
+            <BlurIn delay={1.4}>
+              <div className="flex flex-col items-center gap-4 pb-8">
+                <div className="liquid-glass rounded-full px-3.5 py-1 text-xs font-medium text-white">
+                  Collaborating with top aerospace pioneers globally
+                </div>
+                <div className="flex items-center gap-12 md:gap-16 font-heading italic text-white text-2xl md:text-3xl" style={{ letterSpacing: "-0.5px" }}>
+                  <span>Aeon</span><span>Vela</span><span>Apex</span><span>Orbit</span><span>Zeno</span>
+                </div>
+              </div>
+            </BlurIn>
+          </div>
+        </section>
+      );
+    }
+
+    /* ────────────────────────── Capabilities ────────────────────────── */
+    const CAP_VIDEO =
+      "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_094631_d30ab262-45ee-4b7d-99f3-5d5848c8ef13.mp4";
+
+    function Capabilities() {
+      const cards = [
+        {
+          Icon: MatImage,
+          tags: ["Natural Context", "Photo Realism", "Infinite Settings", "Eco-Vibe"],
+          title: "AI Scenery",
+          body: "AI analyzes your product to create indistinguishable natural environments — from Icelandic cliffs to misty forests.",
+        },
+        {
+          Icon: MatMovie,
+          tags: ["Scale Fast", "Visual Consistency", "Time Saver", "Ready to Post"],
+          title: "Batch Production",
+          body: "Style your entire product line in minutes. Create a unified visual identity for catalogues and social media without weeks of retouching.",
+        },
+        {
+          Icon: MatLight,
+          tags: ["Ray Tracing", "Physical Shadows", "Studio Quality", "Sunlight Sync"],
+          title: "Smart Lighting",
+          body: "Automatic lighting and material adjustment. Achieve flawless integration with realistic shadows and sunlight.",
+        },
+      ];
+
+      return (
+        <section className="relative min-h-screen w-full overflow-hidden bg-black">
+          <FadingVideo
+            src={CAP_VIDEO}
+            className="absolute inset-0 w-full h-full object-cover z-0"
+          />
+
+          <div className="relative z-10 px-8 md:px-16 lg:px-20 pt-24 pb-10 flex flex-col min-h-screen">
+            <div className="mb-auto">
+              <BlurIn>
+                <p className="text-sm font-body text-white/80 mb-6">// Capabilities</p>
+              </BlurIn>
+              <BlurText
+                text="Production evolved"
+                className="font-heading italic text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9]"
+                style={{ letterSpacing: "-3px", justifyContent: "flex-start" }}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+              {cards.map((c, i) => (
+                <BlurIn key={c.title} delay={0.2 + i * 0.12}>
+                  <div className="liquid-glass rounded-[1.25rem] p-6 min-h-[360px] flex flex-col">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="liquid-glass rounded-[0.75rem] relative" style={{ width: 44, height: 44 }}>
+                        <div className="absolute inset-0 grid place-items-center text-white">
+                          <c.Icon className="h-6 w-6" />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap justify-end gap-1.5 max-w-[70%]">
+                        {c.tags.map((t) => (
+                          <span key={t} className="liquid-glass rounded-full px-3 py-1 text-[11px] text-white/90 font-body whitespace-nowrap">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex-1" />
+                    <div className="mt-6">
+                      <h3 className="font-heading italic text-white text-3xl md:text-4xl leading-none" style={{ letterSpacing: "-1px" }}>
+                        {c.title}
+                      </h3>
+                      <p className="mt-3 text-sm text-white/90 font-body font-light leading-snug max-w-[32ch]">
+                        {c.body}
+                      </p>
+                    </div>
+                  </div>
+                </BlurIn>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /* ────────────────────────── App ────────────────────────── */
+    function App() {
+      return (
+        <main>
+          <Hero />
+          <Capabilities />
+        </main>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>

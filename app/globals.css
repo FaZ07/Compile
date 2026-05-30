@@ -1,0 +1,179 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --void: #050507;
+  --abyss: #0a0a0e;
+  --ink: #14141a;
+  --line: rgba(231, 228, 220, 0.07);
+  --line-strong: rgba(231, 228, 220, 0.16);
+  --platinum: #f3f1ea;
+  --ash: #807d75;
+  --signal: #ffb84d;
+  --signal-dim: rgba(255, 184, 77, 0.14);
+  --pulse: #5dd5e6;
+  --pulse-dim: rgba(93, 213, 230, 0.14);
+  --ember: #ff5a47;
+}
+
+* { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+html, body {
+  background: #000;
+  color: var(--platinum);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* fine film grain, fixed overlay */
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 9998;
+  opacity: 0.04; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection { background: var(--signal); color: #1a1205; }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; border: 3px solid #000; }
+
+@layer components {
+  /* ───────── liquid glass (the venture system) ───────── */
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.012);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: none;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  .liquid-glass::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.15) 20%,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0) 60%,
+      rgba(255, 255, 255, 0.15) 80%,
+      rgba(255, 255, 255, 0.45) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
+  .liquid-glass-strong {
+    background: rgba(255, 255, 255, 0.015);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: none;
+    box-shadow: 4px 4px 18px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  .liquid-glass-strong::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0) 60%,
+      rgba(255, 255, 255, 0.2) 80%,
+      rgba(255, 255, 255, 0.5) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
+  /* solid content surfaces — read as distinct raised panels on dark bg
+     (liquid-glass is for thin chrome: nav, chips, badges) */
+  .card {
+    background: linear-gradient(180deg, rgba(24, 24, 31, 0.72), rgba(13, 13, 18, 0.6));
+    border: 1px solid var(--line);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 24px 60px -36px rgba(0, 0, 0, 0.9);
+    position: relative;
+    overflow: hidden;
+  }
+  .card-strong {
+    background: rgba(9, 9, 13, 0.78);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid var(--line-strong);
+    box-shadow: 0 36px 90px -26px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* signal-tinted glass for the active/primary moments */
+  .liquid-glass-signal::before {
+    background: linear-gradient(180deg,
+      rgba(255, 184, 77, 0.55) 0%,
+      rgba(255, 184, 77, 0.18) 25%,
+      rgba(255, 255, 255, 0) 50%,
+      rgba(255, 184, 77, 0.18) 75%,
+      rgba(255, 184, 77, 0.55) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+  }
+
+  .num {
+    font-family: var(--font-mono), monospace;
+    font-feature-settings: "tnum" 1, "zero" 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .eyebrow {
+    font-family: var(--font-mono), monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    font-size: 0.6rem;
+    color: var(--ash);
+  }
+  .serif { font-family: var(--font-display), serif; font-style: italic; }
+  .signal-text { color: var(--signal); }
+  .pulse-text { color: var(--pulse); }
+  .ember-text { color: var(--ember); }
+
+  .grid-lines {
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 75%);
+  }
+}
+
+/* CSS-driven reveals — run on the compositor thread, so the heavy WebGL
+   render loop on the main thread can't starve them (framer can't promise this). */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise { opacity: 0; animation: riseIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@keyframes wordIn {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.word-in {
+  display: inline-block;
+  opacity: 0;
+  animation: wordIn 0.66s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}

@@ -1,22 +1,16 @@
-// Parse a natural-language intention into a strict Intent object using Groq.
-// Falls back to a heuristic parser if Groq isn't configured — so demo never breaks.
+import type { Intent, Level, Goal } from "./types";
 
-import type { Intent } from "./types";
-
-const GROQ_KEY = process.env.GROQ_API_KEY ?? "";
+const GROQ_KEY   = process.env.GROQ_API_KEY ?? "";
 const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
 
-export async function parseIntent(raw: string): Promise<Intent> {
-  const fallback = heuristic(raw);
+export async function parseIntent(raw: string, overrides?: { level?: Level; goal?: Goal }): Promise<Intent> {
+  const fallback = heuristic(raw, overrides);
   if (!GROQ_KEY) return fallback;
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${GROQ_KEY}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${GROQ_KEY}` },
       body: JSON.stringify({
         model: GROQ_MODEL,
         temperature: 0.2,
@@ -25,12 +19,14 @@ export async function parseIntent(raw: string): Promise<Intent> {
           {
             role: "system",
             content:
-              "You are an intent parser for a travel-compilation engine. Output STRICT JSON, no prose. " +
-              "Fields: destination (string), origin (string, EMPTY STRING if not mentioned — never invent one), " +
-              "budget_inr (number|0), party_size (number, default 2), " +
-              "nights (number: trip nights — '2 days' = 1, '3 days' = 2, '4 days' = 3, default 2), " +
-              "vibe (short phrase), themes (array of short tags), date_window (string like 'this weekend', 'next month'). " +
-              "Indian context. Currency is INR.",
+              "You are an intent parser for a research-and-learning compilation engine. Output STRICT JSON, no prose. " +
+              "Fields: " +
+              "topic (string — the core subject, e.g. 'RAG systems', 'Rust', 'AI agents'), " +
+              "level ('beginner'|'intermediate'|'advanced' — infer from context, default 'beginner'), " +
+              "goal ('learn'|'research'|'build'|'career'|'startup' — what the user wants to do), " +
+              "focus (string[] — e.g. ['theory','implementation','papers','projects'] — what aspects matter), " +
+              "timeframe (string — e.g. '1 week', '1 month', 'ongoing'; default '1 month'). " +
+              "Be concise. No extra fields.",
           },
           { role: "user", content: raw },
         ],
@@ -38,66 +34,57 @@ export async function parseIntent(raw: string): Promise<Intent> {
     });
     if (!res.ok) return fallback;
     const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const txt = data.choices?.[0]?.message?.content ?? "";
-    const parsed = JSON.parse(txt) as Partial<Intent>;
+    const txt  = data.choices?.[0]?.message?.content ?? "";
+    const p    = JSON.parse(txt) as Partial<Intent>;
+
     return {
       raw,
-      destination: parsed.destination || fallback.destination,
-      origin: typeof parsed.origin === "string" ? parsed.origin : fallback.origin,
-      budget_inr: typeof parsed.budget_inr === "number" && parsed.budget_inr > 0 ? parsed.budget_inr : fallback.budget_inr,
-      party_size: parsed.party_size && parsed.party_size > 0 ? parsed.party_size : fallback.party_size,
-      nights: typeof parsed.nights === "number" && parsed.nights > 0 ? parsed.nights : fallback.nights,
-      vibe: parsed.vibe || fallback.vibe,
-      themes: Array.isArray(parsed.themes) && parsed.themes.length ? parsed.themes : fallback.themes,
-      date_window: parsed.date_window || fallback.date_window,
+      topic:     p.topic     || fallback.topic,
+      level:     overrides?.level ?? (p.level as Level | undefined)     ?? fallback.level,
+      goal:      overrides?.goal  ?? (p.goal  as Goal  | undefined)     ?? fallback.goal,
+      focus:     Array.isArray(p.focus) && p.focus.length ? p.focus : fallback.focus,
+      timeframe: p.timeframe || fallback.timeframe,
     };
   } catch {
     return fallback;
   }
 }
 
-function heuristic(raw: string): Intent {
+function heuristic(raw: string, overrides?: { level?: Level; goal?: Goal }): Intent {
   const lower = raw.toLowerCase();
-  // budget like ₹15k or 15000
-  const k = lower.match(/(\d+(?:\.\d+)?)\s*k/);
-  const plain = lower.match(/₹?\s*(\d{4,6})/);
-  const budget = k ? Math.round(parseFloat(k[1]) * 1000) : plain ? parseInt(plain[1], 10) : 0;
 
-  const destinations = ["goa", "manali", "rishikesh", "pondicherry", "ooty", "udaipur", "jaipur", "shillong", "kerala", "munnar", "coimbatore", "mysore", "kodaikanal"];
-  const dest = destinations.find((d) => lower.includes(d)) ?? "Goa";
+  // topic: strip common intent words, keep the subject
+  const cleaned = lower
+    .replace(/teach me|learn|i want to|how to|explain|understand|build|research|study|master|beginner guide to|intro to/g, "")
+    .replace(/\s+/g, " ").trim();
+  const topic = cleaned || raw;
 
-  const cities = ["bangalore", "bengaluru", "chennai", "mumbai", "delhi", "hyderabad", "kolkata", "pune", "ahmedabad", "surat"];
-  const originMatch = cities.find((c) => lower.includes(c) && !lower.includes(dest.toLowerCase() + c) );
-  const origin = originMatch ? originMatch.charAt(0).toUpperCase() + originMatch.slice(1) : "";
+  const level: Level = overrides?.level ?? (
+    lower.includes("beginner") || lower.includes("start") || lower.includes("basics") || lower.includes("intro") ? "beginner" :
+    lower.includes("advanced") || lower.includes("deep") || lower.includes("expert") ? "advanced" :
+    "intermediate"
+  );
 
-  const themes: string[] = [];
-  for (const t of ["beach", "mountain", "nightlife", "quiet", "adventure", "food", "spiritual", "trek", "luxury", "budget"]) {
-    if (lower.includes(t)) themes.push(t);
-  }
-  if (!themes.length) themes.push("relaxed");
+  const goal: Goal = overrides?.goal ?? (
+    lower.includes("startup") || lower.includes("company") || lower.includes("business") ? "startup" :
+    lower.includes("career") || lower.includes("job") || lower.includes("hire") ? "career" :
+    lower.includes("build") || lower.includes("project") || lower.includes("implement") ? "build" :
+    lower.includes("research") || lower.includes("paper") || lower.includes("academic") ? "research" :
+    "learn"
+  );
 
-  const party = lower.match(/(\d+)\s*(?:people|ppl|pax)/);
-  const partyN = party ? parseInt(party[1], 10) : 2;
+  const focus: string[] = [];
+  if (lower.includes("paper") || lower.includes("research") || lower.includes("academic")) focus.push("papers");
+  if (lower.includes("code") || lower.includes("implement") || lower.includes("build") || lower.includes("project")) focus.push("implementation");
+  if (lower.includes("theory") || lower.includes("concept") || lower.includes("understand")) focus.push("theory");
+  if (lower.includes("startup") || lower.includes("career") || lower.includes("job")) focus.push("career");
+  if (!focus.length) focus.push("theory", "implementation");
 
-  // "2 days" → 1 night, "3 days" → 2 nights, "weekend" → 2 nights
-  const daysMatch = lower.match(/(\d+)\s*day/);
-  const nights = daysMatch ? Math.max(1, parseInt(daysMatch[1], 10) - 1) : 2;
+  const timeframe =
+    lower.includes("week") ? "1 week" :
+    lower.includes("month") ? "1 month" :
+    lower.includes("3 month") || lower.includes("quarter") ? "3 months" :
+    "1 month";
 
-  let window = "this weekend";
-  if (lower.includes("next weekend")) window = "next weekend";
-  else if (lower.includes("next month")) window = "next month";
-  else if (lower.includes("this month")) window = "this month";
-  else if (lower.includes("this week")) window = "this week";
-
-  return {
-    raw,
-    destination: dest.charAt(0).toUpperCase() + dest.slice(1),
-    origin,
-    budget_inr: budget || 15000,
-    party_size: partyN,
-    nights,
-    vibe: themes.join(", "),
-    themes,
-    date_window: window,
-  };
+  return { raw, topic: topic.slice(0, 80), level, goal, focus, timeframe };
 }

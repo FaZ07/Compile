@@ -1,62 +1,43 @@
-// COMPILE — shared types. Locked here so the SSE protocol and the UI agree.
+// COMPILE — ResearchOS types. Shared across SSE protocol and UI.
 
 export type NodeId =
-  | "location"
-  | "weather"
-  | "reddit"
   | "wiki"
-  | "flights"
-  | "stays"
-  | "events";
+  | "papers"
+  | "repos"
+  | "tutorials"
+  | "discussions"
+  | "trends";
 
 export interface NodeMeta {
   id: NodeId;
-  label: string; // shown on the 3D node
-  source: string; // "Open-Meteo", "Reddit", etc.
-  real: boolean; // true = hits a live public API; false = realistic mock
-  /** Order around the ring in the 3D graph. */
+  label: string;
+  source: string;
+  real: boolean;
   angleOrder: number;
 }
 
 export const NODE_REGISTRY: Record<NodeId, NodeMeta> = {
-  location: { id: "location", label: "Coordinates", source: "Nominatim", real: true, angleOrder: 0 },
-  weather: { id: "weather", label: "Weather", source: "Open-Meteo", real: true, angleOrder: 1 },
-  wiki: { id: "wiki", label: "Context", source: "Wikipedia", real: true, angleOrder: 2 },
-  reddit: { id: "reddit", label: "Ground truth", source: "Reddit", real: true, angleOrder: 3 },
-  flights: { id: "flights", label: "Flights", source: "Skyscanner *", real: false, angleOrder: 4 },
-  stays: { id: "stays", label: "Stays", source: "Agoda + Airbnb *", real: false, angleOrder: 5 },
-  events: { id: "events", label: "Events", source: "BookMyShow *", real: false, angleOrder: 6 },
+  wiki:        { id: "wiki",        label: "Context",   source: "Wikipedia",              real: true,  angleOrder: 0 },
+  papers:      { id: "papers",      label: "Papers",    source: "arXiv",                  real: true,  angleOrder: 1 },
+  repos:       { id: "repos",       label: "Code",      source: "GitHub",                 real: true,  angleOrder: 2 },
+  tutorials:   { id: "tutorials",   label: "Tutorials", source: "DEV.to + YouTube *",     real: false, angleOrder: 3 },
+  discussions: { id: "discussions", label: "Community", source: "Reddit + HN",            real: true,  angleOrder: 4 },
+  trends:      { id: "trends",      label: "Trends",    source: "PH + YC + TechCrunch *", real: false, angleOrder: 5 },
 };
+
+export type Level = "beginner" | "intermediate" | "advanced";
+export type Goal  = "learn" | "research" | "build" | "career" | "startup";
 
 export interface Intent {
   raw: string;
-  destination: string; // human readable
-  origin?: string;
-  budget_inr?: number;
-  party_size: number;
-  nights: number; // trip duration in nights (1 night = 2-day trip)
-  vibe: string; // free-text mood tag
-  themes: string[]; // e.g. ["beach", "nightlife"]
-  date_window: string; // human readable; e.g. "this weekend"
+  topic: string;
+  level: Level;
+  goal: Goal;
+  focus: string[];      // e.g. ["theory", "implementation", "papers"]
+  timeframe: string;    // "1 week", "1 month", "3 months"
 }
 
-export interface LocationData {
-  display_name: string;
-  lat: number;
-  lon: number;
-}
-
-export interface WeatherData {
-  summary: string; // "Sunny, 28–32°C"
-  rain_probability_pct: number;
-  temp_min_c: number;
-  temp_max_c: number;
-}
-
-export interface RedditData {
-  posts: { title: string; subreddit: string; score: number; url: string; snippet: string }[];
-  sentiment: "positive" | "mixed" | "negative" | "unclear";
-}
+// ---- Node payloads ----------------------------------------
 
 export interface WikiData {
   title: string;
@@ -64,41 +45,62 @@ export interface WikiData {
   url: string;
 }
 
-export interface FlightOption {
-  airline: string;
-  depart: string; // ISO
-  arrive: string;
-  price_inr: number;
-  route: string; // "BLR → GOI"
+export interface Paper {
+  title: string;
+  authors: string[];
+  year: number;
+  abstract: string;
+  url: string;
+  source: "arXiv" | "Semantic Scholar";
 }
 
-
-export interface StayOption {
-  platform: string;
+export interface Repo {
   name: string;
-  area: string;
-  nightly_inr: number;
-  all_in_nightly_inr: number;
-  fee_breakdown: { label: string; amount: number }[];
-  rating: number;
+  full_name: string;
+  description: string;
+  stars: number;
+  language: string;
+  url: string;
+  topics: string[];
+  updated: string;
 }
 
-export interface EventOption {
-  name: string;
-  venue: string;
-  when: string;
-  price_inr: number | "free";
+export interface Tutorial {
+  title: string;
+  author: string;
+  platform: "DEV.to" | "YouTube" | "Medium";
+  url: string;
+  tags: string[];
+  published: string;
+  read_time_min?: number;
+  views?: number;
 }
 
-// Discriminated payload for each node's result.
+export interface DiscussionPost {
+  title: string;
+  source: "Reddit" | "HN";
+  url: string;
+  score: number;
+  comments: number;
+  snippet: string;
+}
+
+export interface TrendSignal {
+  domain: string;
+  trajectory: "rising" | "stable" | "declining";
+  note: string;
+  hot_tools: string[];
+  yc_companies: string[];
+  ph_launches: string[];
+}
+
 export type NodePayload =
-  | { id: "location"; data: LocationData }
-  | { id: "weather"; data: WeatherData }
-  | { id: "reddit"; data: RedditData }
-  | { id: "wiki"; data: WikiData }
-  | { id: "flights"; data: FlightOption[] }
-  | { id: "stays"; data: StayOption[] }
-  | { id: "events"; data: EventOption[] };
+  | { id: "wiki";        data: WikiData }
+  | { id: "papers";      data: Paper[] }
+  | { id: "repos";       data: Repo[] }
+  | { id: "tutorials";   data: Tutorial[] }
+  | { id: "discussions"; data: DiscussionPost[] }
+  | { id: "trends";      data: TrendSignal };
 
 export interface NodeResult<T = unknown> {
   id: NodeId;
@@ -108,26 +110,39 @@ export interface NodeResult<T = unknown> {
   error?: string;
 }
 
+// ---- Synthesis ----------------------------------------
+
+export interface RoadmapPhase {
+  phase: number;
+  title: string;
+  duration: string;
+  objectives: string[];
+  resources: string[];
+}
+
+export interface Synthesis {
+  headline: string;
+  summary: string;
+  roadmap: RoadmapPhase[];
+  projects: string[];
+  insights: string[];
+  trend: "rising" | "stable" | "declining";
+  trend_note: string;
+}
+
 export interface Verification {
   source: string;
   claim: string;
   link?: string;
 }
 
-export interface Synthesis {
-  headline: string; // big single line for the reveal
-  summary: string; // 3–4 sentence story
-  total_inr: number;
-  verification: Verification[];
-}
-
-// ---- Wire protocol (SSE events) ----------------------------------------
+// ---- Wire SSE protocol ----------------------------------------
 
 export type CompileEvent =
-  | { type: "stage"; stage: "parse" | "compile" | "fetch" | "synthesize" | "done" }
-  | { type: "intent"; intent: Intent }
-  | { type: "dag"; nodes: NodeId[] }
+  | { type: "stage";     stage: "parse" | "compile" | "fetch" | "synthesize" | "done" }
+  | { type: "intent";    intent: Intent }
+  | { type: "dag";       nodes: NodeId[] }
   | { type: "node:start"; id: NodeId }
-  | { type: "node:done"; id: NodeId; result: NodeResult }
+  | { type: "node:done";  id: NodeId; result: NodeResult }
   | { type: "synthesis"; synthesis: Synthesis }
-  | { type: "error"; message: string };
+  | { type: "error";     message: string };

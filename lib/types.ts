@@ -6,7 +6,6 @@ export type NodeId =
   | "reddit"
   | "wiki"
   | "flights"
-  | "buses"
   | "stays"
   | "events";
 
@@ -25,9 +24,8 @@ export const NODE_REGISTRY: Record<NodeId, NodeMeta> = {
   wiki: { id: "wiki", label: "Context", source: "Wikipedia", real: true, angleOrder: 2 },
   reddit: { id: "reddit", label: "Ground truth", source: "Reddit", real: true, angleOrder: 3 },
   flights: { id: "flights", label: "Flights", source: "Skyscanner *", real: false, angleOrder: 4 },
-  buses: { id: "buses", label: "Buses", source: "Redbus *", real: false, angleOrder: 5 },
-  stays: { id: "stays", label: "Stays", source: "Agoda + Airbnb *", real: false, angleOrder: 6 },
-  events: { id: "events", label: "Events", source: "BookMyShow *", real: false, angleOrder: 7 },
+  stays: { id: "stays", label: "Stays", source: "Agoda + Airbnb *", real: false, angleOrder: 5 },
+  events: { id: "events", label: "Events", source: "BookMyShow *", real: false, angleOrder: 6 },
 };
 
 export interface Intent {
@@ -74,15 +72,6 @@ export interface FlightOption {
   route: string; // "BLR → GOI"
 }
 
-export interface BusOption {
-  operator: string;
-  type: string; // "Sleeper AC", "Seater", "Volvo AC"
-  depart: string; // ISO
-  arrive: string;
-  duration_hours: number;
-  price_inr: number;
-  route: string;
-}
 
 export interface StayOption {
   platform: string;
@@ -108,7 +97,6 @@ export type NodePayload =
   | { id: "reddit"; data: RedditData }
   | { id: "wiki"; data: WikiData }
   | { id: "flights"; data: FlightOption[] }
-  | { id: "buses"; data: BusOption[] }
   | { id: "stays"; data: StayOption[] }
   | { id: "events"; data: EventOption[] };
 

@@ -212,7 +212,7 @@ function Idle({
         <div className="rise" style={{ animationDelay: "0.1s" }}>
           <div className="liquid-glass rounded-full inline-flex items-center gap-2 pr-3.5">
             <span className="bg-signal text-black px-2.5 py-1 text-[0.62rem] font-semibold rounded-full tracking-wide">LIVE</span>
-            <span className="text-[0.8rem] text-platinum/85 font-sans">Eight sources reconciled in under 10 seconds</span>
+            <span className="text-[0.8rem] text-platinum/85 font-sans">Seven sources reconciled in under 10 seconds</span>
           </div>
         </div>
 
@@ -361,7 +361,6 @@ function LandingSections() {
     { label: "Context", source: "Wikipedia", live: true, gives: "Grounding context on the destination." },
     { label: "Ground truth", source: "Reddit", live: true, gives: "Unfiltered takes from people who actually went." },
     { label: "Flights", source: "Skyscanner", live: false, gives: "Live fares compared across airlines." },
-    { label: "Buses", source: "Redbus", live: false, gives: "Bus fares and operators — often cheaper than flights for under 10h routes." },
     { label: "Stays", source: "Agoda + Airbnb", live: false, gives: "Rooms at the true all-in price, fees included." },
     { label: "Events", source: "BookMyShow", live: false, gives: "What's actually on those nights." },
   ];
@@ -399,7 +398,7 @@ function LandingSections() {
       {/* §02 — how it compiles */}
       <Section kicker="// how it compiles" title="Not a chatbot." accent="A compiler.">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-          {[{ n: "8", l: "live sources" }, { n: "<10s", l: "to reconcile" }, { n: "4", l: "real-time APIs" }, { n: "0", l: "hallucinated facts" }].map((s) => (
+          {[{ n: "7", l: "live sources" }, { n: "<10s", l: "to reconcile" }, { n: "4", l: "real-time APIs" }, { n: "0", l: "hallucinated facts" }].map((s) => (
             <div key={s.l} className="card rounded-[1.1rem] p-6">
               <div className="serif text-signal text-[2.6rem] leading-none">{s.n}</div>
               <div className="num text-[0.58rem] tracking-widest text-ash mt-3 uppercase">{s.l}</div>
@@ -430,8 +429,8 @@ function LandingSections() {
       </Section>
 
       {/* §03 — the sources */}
-      <Section kicker="// the sources" title="Eight systems." accent="One truth."
-        sub="Each one fires in parallel and returns clean structured data. Four are live public APIs today; four are wire-ready — one key flips them to live.">
+      <Section kicker="// the sources" title="Seven systems." accent="One truth."
+        sub="Each one fires in parallel and returns clean structured data. Four are live public APIs today; three are wire-ready — one key flips them to live.">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sources.map((s) => (
             <div key={s.source} className="card rounded-[1.2rem] p-6">
@@ -665,7 +664,6 @@ function renderPreview(r: NodeResult): string {
   if (r.id === "wiki") { const d = r.data as { title: string; summary: string }; return `${d.title} — ${d.summary.slice(0, 130)}…`; }
   if (r.id === "reddit") { const d = r.data as { posts: { title: string }[]; sentiment: string }; return `sentiment: ${d.sentiment} · top: "${d.posts[0]?.title?.slice(0, 80) ?? "—"}"`; }
   if (r.id === "flights") { const d = r.data as { airline: string; price_inr: number; route: string }[]; return d.slice(0, 3).map((f) => `${f.airline} ${f.route} ₹${f.price_inr}`).join(" · "); }
-  if (r.id === "buses") { const d = r.data as { operator: string; type: string; price_inr: number; duration_hours: number }[]; return d.slice(0, 3).map((b) => `${b.operator} (${b.type}) ₹${b.price_inr} · ${b.duration_hours}h`).join(" · "); }
   if (r.id === "stays") { const d = r.data as { platform: string; name: string; all_in_nightly_inr: number; nightly_inr: number }[]; const s = d[0]; return s ? `cheapest: ${s.name} (${s.platform}) — shown ₹${s.nightly_inr}, all-in ₹${s.all_in_nightly_inr}` : "—"; }
   if (r.id === "events") { const d = r.data as { name: string; price_inr: number | "free" }[]; return d.slice(0, 3).map((e) => `${e.name} (${e.price_inr === "free" ? "free" : "₹" + e.price_inr})`).join(" · "); }
   return JSON.stringify(r.data).slice(0, 130);

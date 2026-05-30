@@ -12,7 +12,7 @@ export interface DagStage {
 export function compileDAG(_intent: Intent): DagStage[] {
   return [
     { stage: 1, nodes: ["location"] },
-    { stage: 2, nodes: ["weather", "wiki", "reddit", "flights", "buses", "stays", "events"] },
+    { stage: 2, nodes: ["weather", "wiki", "reddit", "flights", "stays", "events"] },
   ];
 }
 

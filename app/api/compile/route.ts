@@ -9,7 +9,6 @@ import { fetchWeather } from "@/lib/nodes/weather";
 import { fetchReddit } from "@/lib/nodes/reddit";
 import { fetchWiki } from "@/lib/nodes/wiki";
 import { fetchFlights } from "@/lib/nodes/flights";
-import { fetchBuses } from "@/lib/nodes/buses";
 import { fetchStays } from "@/lib/nodes/stays";
 import { fetchEvents } from "@/lib/nodes/events";
 import { synthesize } from "@/lib/synthesize";
@@ -68,7 +67,6 @@ export async function POST(req: Request) {
           runNode("wiki", sse, results, () => fetchWiki(intent.destination)),
           runNode("reddit", sse, results, () => fetchReddit(intent.destination, intent.vibe || intent.themes.join(" "))),
           runNode("flights", sse, results, () => fetchFlights(transportOrigin, intent.destination, intent.date_window)),
-          runNode("buses", sse, results, () => fetchBuses(transportOrigin, intent.destination, intent.date_window)),
           runNode("stays", sse, results, () => fetchStays(intent.destination, intent.party_size, intent.budget_inr ?? 15000)),
           runNode("events", sse, results, () => fetchEvents(intent.destination)),
         ]);

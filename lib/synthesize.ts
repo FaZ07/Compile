@@ -46,19 +46,52 @@ export async function synthesize(
     });
     if (!res.ok) return fallback;
     const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const p = JSON.parse(data.choices?.[0]?.message?.content ?? "{}") as Partial<Synthesis>;
+    const p = JSON.parse(data.choices?.[0]?.message?.content ?? "{}") as Record<string, unknown>;
 
+    // Never trust the LLM's shape — coerce every field to its exact type.
     return {
-      headline:   p.headline   || fallback.headline,
-      summary:    p.summary    || fallback.summary,
-      roadmap:    Array.isArray(p.roadmap)  && p.roadmap.length  ? p.roadmap  : fallback.roadmap,
-      projects:   Array.isArray(p.projects) && p.projects.length ? p.projects : fallback.projects,
-      insights:   Array.isArray(p.insights) && p.insights.length ? p.insights : fallback.insights,
-      trend_note: p.trend_note || fallback.trend_note,
+      headline:   str(p.headline)   || fallback.headline,
+      summary:    str(p.summary)    || fallback.summary,
+      roadmap:    Array.isArray(p.roadmap)  && p.roadmap.length  ? p.roadmap.map(normPhase)    : fallback.roadmap,
+      projects:   Array.isArray(p.projects) && p.projects.length ? p.projects.map(normProject) : fallback.projects,
+      insights:   strArray(p.insights).length ? strArray(p.insights)                            : fallback.insights,
+      trend_note: str(p.trend_note) || fallback.trend_note,
     };
   } catch {
     return fallback;
   }
+}
+
+// ── normalisers — guarantee the typed shape regardless of LLM drift ──
+function str(v: unknown): string { return typeof v === "string" ? v : ""; }
+
+function strArray(v: unknown): string[] {
+  if (Array.isArray(v)) {
+    return v.map((x) => (typeof x === "string" ? x : str((x as { title?: string })?.title) || String(x))).filter(Boolean);
+  }
+  if (typeof v === "string") return v.split(/\n|·|•|;/).map((s) => s.trim()).filter(Boolean);
+  return [];
+}
+
+function normPhase(raw: unknown, i: number): RoadmapPhase {
+  const p = (raw ?? {}) as Record<string, unknown>;
+  return {
+    phase:      typeof p.phase === "number" ? p.phase : i + 1,
+    title:      str(p.title) || `Phase ${i + 1}`,
+    duration:   str(p.duration) || `Week ${i + 1}`,
+    objectives: strArray(p.objectives),
+    resources:  strArray(p.resources),
+  };
+}
+
+function normProject(raw: unknown): ProjectIdea {
+  const p = (raw ?? {}) as Record<string, unknown>;
+  const d = Number(p.difficulty);
+  return {
+    title:      str(p.title) || "Project",
+    difficulty: (d === 1 || d === 2 || d === 3 ? d : 2) as 1 | 2 | 3,
+    why:        str(p.why) || "",
+  };
 }
 
 function extractFacts(intent: Intent, r: Record<string, NodeResult>, m: CompileMetrics) {

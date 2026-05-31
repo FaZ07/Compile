@@ -1,78 +1,176 @@
-# ◇ COMPILE — the reality compiler for learning
+# COMPILE — The Reality Compiler for Learning
 
-> **Say what you want to learn. The internet compiles it.**
-> Not a chatbot. Not a search engine. A *compiler* — intention in, one executable knowledge plan out, with real-time comparative metrics.
+The internet is the largest database in human history.
+It still cannot tell you what to learn next.
 
-COMPILE takes a single learning goal, fires **6 sources across the live internet in parallel**, measures how fast the field is moving, and reconciles everything into a ranked, executable plan — visualised as a cinematic 3D reasoning graph that lights up node-by-node as reality resolves.
+COMPILE fixes that.
 
-```
-"Teach me RAG systems — I want to build a startup."
-        ↓  ~10 seconds, fully autonomous
- Field Velocity 76/100 ▲ rising · 21 live artifacts
- → 4-phase roadmap · ranked repos · frontier papers · community truth · trend intel
-```
+COMPILE is an Autonomous Internet Intelligence Compiler for learning, building, and deciding.
+You give it an intention. It compiles the live internet into one executable knowledge plan.
 
----
+Not a chatbot.
+Not a search engine.
+A compiler.
 
-## Why it's different
+## What it does
 
-| Most projects | COMPILE |
-|---|---|
-| Chatbot: text → text | Compiler: intent → typed plan → parallel execution → reconciled artifact |
-| One model guessing | 6 live sources, cross-checked |
-| A list of links | **Ranked & compared** by stars, recency, citations, upvotes |
-| "Here's some info" | **Field Velocity** — a measured score of how fast the field moves |
+COMPILE takes a single learning or building goal and turns it into a ranked, executable intelligence flow.
 
-It demonstrates Wire's thesis literally: **the internet is your database.**
+It scans live signals across the internet in parallel, measures how fast a field is moving, and reconciles everything into a strategic verdict.
 
-## The pipeline
+The output is not a wall of text.
+It is a living intelligence result with:
+- a Field Velocity score
+- ranked sources
+- comparison signals
+- a 4-phase roadmap
+- community truth
+- research context
+- execution guidance
 
-```
-POST /api/compile  (Server-Sent Events)
-  parse      → Groq → typed Intent           (heuristic fallback — never breaks)
-  compile    → DAG  → emit node list
-  fetch      → all 6 SourceAdapters in parallel (allSettled)
-               each streams node:start → node:done (+ real timing + count)
-  metrics    → compute Field Velocity + trajectory
-  synthesize → Groq → roadmap + projects + insights   (template fallback)
-  done
-```
+## Why it exists
 
-Every source is a uniform `SourceAdapter` — **adding a source is one file.** One source failing never kills the compile.
+People waste too much time deciding:
+- what to learn
+- what to build
+- what stack to bet on
+- which ecosystem is actually moving
 
-## The 6 sources — 5 genuinely live, no API key
+COMPILE turns that chaos into conviction.
 
-| Source | Provider | Status | Signal it contributes |
-|---|---|---|---|
-| Context   | Wikipedia REST     | 🟢 LIVE | grounding summary |
-| Research  | arXiv Atom API     | 🟢 LIVE | latest papers, recency |
-| Code      | GitHub Search      | 🟢 LIVE | repos ranked by stars + activity |
-| Tutorials | DEV.to API         | 🟢 LIVE | articles, reactions (+ YouTube wire-ready) |
-| Community | Hacker News + Reddit | 🟢 LIVE | discussions, upvotes, real opinions |
-| Trends    | YC · Product Hunt · TechCrunch | 🟠 WIRE-READY | trajectory, hot tools, funded companies |
+## Core experience
 
-## Field Velocity — the comparative brain
+### 1) Intelligence Console
+Users enter an intention, then tune the analysis by:
+- level
+- goal
+- profile
+- depth
 
-A deterministic 0–100 score of how fast a field is moving, blended from:
-`trajectory signal · research recency · code gravity (log stars) · community heat`.
-It's the metric that turns COMPILE from a *reader* into an *analyst*.
+This makes the system feel less like a generic assistant and more like a strategic instrument.
 
-## Tech
+### 2) Live Compile Engine
+When COMPILE runs, multiple signal pipelines fire in parallel.
+Each source contributes a different layer of reality.
 
-Next.js 15 · React 19 · TypeScript · **raw Three.js** (FogExp2 abyss · `UnrealBloomPass` glow · LERP inertial camera) · Tailwind · Framer Motion · SSE · **Groq** (llama-3.3-70b) for parse + synthesis. Zero paid infra — bloom ships inside `three`.
+The system streams progress live, updates node-by-node, and resolves into one compiled outcome.
 
-## Run it
+### 3) Field Velocity
+Field Velocity is the main metric.
+It is a deterministic 0–100 score that shows how fast a field is moving.
+
+It blends:
+- trajectory signal
+- research recency
+- code gravity
+- community heat
+
+This is the metric that turns COMPILE from a reader into an analyst.
+
+### 4) Output Layer
+The output page is the live intelligence command center.
+It shows:
+- strategic conviction
+- ecosystem momentum
+- comparative signal
+- live score movement
+- pipeline status
+
+### 5) Conviction Radar
+The radar breaks an ecosystem into measurable dimensions:
+- Research Momentum
+- Developer Adoption
+- Infrastructure Reliability
+- Execution Complexity
+- Community Velocity
+- Long-Term Durability
+
+This explains why a result matters, not just what it says.
+
+### 6) Dossier
+The dossier converts live intelligence into execution.
+
+Every dossier yields:
+- strategic recommendation + conviction
+- Compile Score breakdown
+- ecosystem risk matrix
+- 4-phase build compiler
+- ranked repos / references
+
+### 7) Compare Engine
+Users can compare ecosystems head-to-head and get a strategic verdict instead of endless opinion loops.
+
+### 8) Graph View
+The graph turns internet intelligence into a living visual system.
+It shows relationships between ecosystems, momentum, adoption, and research.
+
+### 9) Archive / Permalink
+Every compile becomes a permanent artifact.
+Users can revisit reports, open the graph, and return to saved intelligence later.
+
+## The 6 source model
+
+COMPILE uses 5 live APIs for efficient usage of Wire Credits as these 5 would have  taken a lot of the limited credits in testing cycles plus 1 Wire-backed source path.
+
+Every source is wrapped as a uniform adapter, so the system stays modular:
+- one source failing never breaks the compile
+- adding a new source is one file
+- all signals reconcile into one output
+
+That is the Wire thesis in practice:
+the internet is your database.
+
+## Why Anakin Wire matters
+
+Without Wire, this project would have turned into a scraping project.
+
+Wire removes the ugly part:
+- browser automation
+- selectors
+- login maintenance
+- anti-bot hassle
+- proxy routing
+- scraping babysitting
+
+That lets COMPILE focus on the actual product:
+turning live internet activity into structured intelligence.
+
+## Tech stack
+
+- Next.js 15
+- React 19
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- Three.js
+- Server-Sent Events
+- Groq for parse + synthesis
+- Anakin Wire for live internet signal access
+
+## UI / design direction
+
+COMPILE uses a tactile brutalist paper-dossier style:
+- warm paper backgrounds
+- dense charcoal ink
+- orange stamp accents
+- blueprint underlay
+- Hanken Grotesk + JetBrains Mono
+- cinematic motion and live signal feedback
+
+The result feels like a research dossier that came out of the future.
+
+## How it works
+
+1. Enter an intention.
+2. Choose level, goal, profile, and depth.
+3. Run compile.
+4. Watch live pipelines reconcile.
+5. Read the output layer.
+6. Dive into the dossier, graph, compare view, or archive.
+
+## Run locally
 
 ```bash
 npm install
-cp .env.example .env.local   # add your GROQ_API_KEY (optional — falls back to heuristics)
-npm run dev                  # → http://localhost:3000
-```
-
-## Design
-
-Modern Urban Noir & Liquid Glass — obsidian `#050505`, cyan `#00FFFF` (active logic), gold `#D4AF37` (resolved success). Hanken Grotesk + JetBrains Mono. Plus study charm: sticky-note facts, notebook-ruled roadmap cards, brand logos, hand-drawn doodles. A place you'd want to sit and learn.
-
----
-
-*Built for the Anakin Build-a-thon. Powered by Anakin Wire + Groq.*
+cp .env.example .env.local
+npm run dev

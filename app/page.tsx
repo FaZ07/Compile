@@ -249,7 +249,7 @@ function Console(p: {
 }) {
   return (
     <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={SPRING} className="relative min-h-screen w-full">
-      <div className="relative z-10 mx-auto max-w-6xl px-5 pt-16 pb-6">
+      <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-14 sm:pt-16 pb-6">
         <motion.div variants={riseIn} initial="hidden" animate="show" className="flex items-center gap-3 flex-wrap">
           <span className="cert">◇ AUTONOMOUS INTERNET INTELLIGENCE COMPILER</span>
         </motion.div>
@@ -389,7 +389,7 @@ function Compiling(p: {
 
   return (
     <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={SPRING} className="relative min-h-screen w-full">
-      <div className="relative z-10 mx-auto max-w-6xl px-5 pt-16 pb-36 grid gap-3 lg:grid-cols-[1fr_320px]">
+      <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-14 sm:pt-16 pb-44 sm:pb-36 grid gap-3 lg:grid-cols-[1fr_320px]">
 
         {/* status + velocity */}
         <div className="brutal p-4 self-start" style={{ background: "var(--paper)" }}>
@@ -438,10 +438,10 @@ function Compiling(p: {
 
       {/* terminal — fixed bottom, compact height */}
       <div className="fixed inset-x-0 bottom-0 z-10">
-        <div className="mx-auto max-w-6xl px-5 pb-3">
-          <div className="brutal p-2.5" style={{ background: "var(--ink)" }}>
-            <p className="label mb-1" style={{ fontSize: "0.42rem", color: "rgba(249,247,242,0.4)" }}>SIGNAL LOG</p>
-            <div className="mono text-[0.64rem] leading-relaxed max-h-20 overflow-y-auto pr-1" style={{ color: "var(--paper)" }}>
+        <div className="mx-auto max-w-6xl px-3 sm:px-5 pb-2 sm:pb-3">
+          <div className="brutal p-2" style={{ background: "var(--ink)" }}>
+            <p className="label mb-0.5" style={{ fontSize: "0.4rem", color: "rgba(249,247,242,0.4)" }}>SIGNAL LOG</p>
+            <div className="mono text-[0.58rem] sm:text-[0.64rem] leading-relaxed max-h-16 sm:max-h-20 overflow-y-auto pr-1" style={{ color: "var(--paper)" }}>
               {p.log.map((l, i) => (
                 <div key={i} style={{ color: l.startsWith("✓") ? "#a8e6a3" : l.startsWith("✗") ? "var(--stamp)" : l.startsWith("▶") ? "var(--stamp)" : l.startsWith("→") ? "#d6e4ff" : "rgba(249,247,242,0.5)" }}>{l}</div>
               ))}

@@ -79,7 +79,7 @@ function StickyPanel({ facts }: { facts: string[] }) {
   const items = facts.slice(0, 3);
   if (!items.length) return null;
   return (
-    <div className="fixed right-0 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-1.5">
+    <div className="hidden md:flex fixed right-0 top-1/2 -translate-y-1/2 z-30 flex-col gap-1.5">
       {items.map((f, i) => (
         <div key={i} className="relative flex items-stretch">
           {/* expanded card — slides out to the left */}
@@ -123,7 +123,7 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
   const confMeta  = confidenceMeta(m.confidence, m.trajectory);
 
   return (
-    <div className="relative z-10 mx-auto max-w-6xl px-5 pt-16 pb-12">
+    <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-16 pb-12">
       <StickyPanel facts={facts} />
 
       {/* classification strip */}

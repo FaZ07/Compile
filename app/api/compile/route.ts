@@ -12,8 +12,9 @@ import { pickFacts } from "@/lib/facts";
 import { SSEStream } from "@/lib/sse";
 import type { Intent, Level, Goal, NodeId, NodeResult, CompileMetrics, Synthesis, Discussion, TrendData } from "@/lib/types";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime    = "nodejs";
+export const dynamic    = "force-dynamic";
+export const maxDuration = 60; // Vercel hobby plan max — prevents 10s hard cut
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -147,6 +148,9 @@ async function replay(sse: SSEStream, b: Bundle) {
   sse.send({ type: "stage", stage: "done" });
 }
 
+// 15s hard cap per source — prevents one slow API from hanging the entire compile
+const SOURCE_TIMEOUT_MS = 15_000;
+
 async function runNode(
   id: NodeId, sse: SSEStream, store: Record<string, NodeResult>,
   fn: () => Promise<{ data: unknown; count: number }>,
@@ -154,7 +158,10 @@ async function runNode(
   const t0 = Date.now();
   sse.send({ type: "node:start", id });
   try {
-    const { data, count } = await fn();
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${id} source timed out after ${SOURCE_TIMEOUT_MS / 1000}s`)), SOURCE_TIMEOUT_MS)
+    );
+    const { data, count } = await Promise.race([fn(), timeout]);
     const result: NodeResult = { id, ok: true, duration_ms: Date.now() - t0, count, data };
     store[id] = result;
     sse.send({ type: "node:done", id, result });

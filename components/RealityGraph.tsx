@@ -12,6 +12,7 @@ export interface Props {
   phase: "idle" | "compiling" | "complete";
   offsetX?: number;
   fieldVelocity?: number;
+  zoomOut?: number; // extra Z distance — use for mobile where canvas is smaller
 }
 
 const INK   = new THREE.Color("#1a1a1b");
@@ -45,18 +46,20 @@ interface Node {
   flash: number;
 }
 
-export default function RealityGraph({ nodes, states, phase, offsetX = 0, fieldVelocity = 50 }: Props) {
-  const mountRef   = useRef<HTMLDivElement>(null);
-  const nodesRef   = useRef(nodes);
-  const statesRef  = useRef(states);
-  const phaseRef   = useRef(phase);
-  const offRef     = useRef(offsetX);
-  const velRef     = useRef(fieldVelocity);
-  nodesRef.current  = nodes;
-  statesRef.current = states;
-  phaseRef.current  = phase;
-  offRef.current    = offsetX;
-  velRef.current    = fieldVelocity;
+export default function RealityGraph({ nodes, states, phase, offsetX = 0, fieldVelocity = 50, zoomOut = 0 }: Props) {
+  const mountRef    = useRef<HTMLDivElement>(null);
+  const nodesRef    = useRef(nodes);
+  const statesRef   = useRef(states);
+  const phaseRef    = useRef(phase);
+  const offRef      = useRef(offsetX);
+  const velRef      = useRef(fieldVelocity);
+  const zoomOutRef  = useRef(zoomOut);
+  nodesRef.current   = nodes;
+  statesRef.current  = states;
+  phaseRef.current   = phase;
+  offRef.current     = offsetX;
+  velRef.current     = fieldVelocity;
+  zoomOutRef.current = zoomOut;
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -266,8 +269,8 @@ export default function RealityGraph({ nodes, states, phase, offsetX = 0, fieldV
 
       const dest = ph === "complete" ? camDone : ph === "idle" ? camIdle : camWork;
       const ox = offRef.current;
-      // On portrait/mobile, pull camera back so full constellation is visible
-      const portraitZBoost = camera.aspect < 0.75 ? 9.0 : camera.aspect < 0.9 ? 7.0 : camera.aspect < 1.2 ? 2.5 : 0;
+      // Explicit zoom-out from parent (mobile graph page passes zoomOut=10)
+      const portraitZBoost = zoomOutRef.current;
       const swing = ph === "idle" ? 1.4 : compilingNow ? 1.2 : completeNow ? 0.6 : 0.5;
       const rate  = ph === "idle" ? 0.1 : compilingNow ? 0.26 : 0.18;
       camera.position.lerp(new THREE.Vector3(

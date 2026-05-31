@@ -5,6 +5,7 @@ import type {
   Intent, NodeResult, Synthesis, RoadmapPhase, ProjectIdea, Recommendation, EcosystemRisk,
   Paper, Repo, Tutorial, Discussion, TrendData, ContextData, CompileMetrics,
 } from "./types";
+import { resolveEntities } from "./entities";
 
 const GROQ_KEY   = process.env.GROQ_API_KEY ?? "";
 const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
@@ -199,6 +200,12 @@ export async function synthesize(
 
   const startupLayer = profileLayer; // unified
 
+  // Entity resolution context — prevents Groq from confusing MCP, RAG, etc.
+  const { entityNotes } = resolveEntities(intent.raw ?? intent.topic);
+  const entityLayer = entityNotes
+    ? `\n\nENTITY RESOLUTION (treat these as canonical): ${entityNotes}. Use the full expansion in all analysis — never the abbreviation alone.`
+    : "";
+
   const startupVerdictFmt = intent.goal === "startup"
     ? "verdict field in recommendation must use startup framing: 'STRONG BET · BUILD', 'BET · COMMIT', 'CONDITIONAL BET · VALIDATE FIRST', 'NO-BET · WAIT'. Never use plain LEARN/CAREER."
     : "";
@@ -240,6 +247,7 @@ export async function synthesize(
               (intent.domain && intent.domain !== "general-programming"
                 ? `\nDOMAIN LOCK: This query is classified as '${intent.domain.toUpperCase()}'. ALL repos, papers, and tools cited must belong to this domain. Reject off-domain results even if popular.\n`
                 : "") +
+              entityLayer +
               startupLayer,
           },
           { role: "user", content: JSON.stringify({ intent, facts }, null, 2) },

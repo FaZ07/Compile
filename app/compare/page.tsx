@@ -8,6 +8,7 @@ import Counter from "@/components/Counter";
 import { parseSSE } from "@/lib/sse";
 import { saveCompile } from "@/lib/store";
 import { riseIn, SPRING, submitShake } from "@/lib/motion";
+import { validateComparisonCoherence } from "@/lib/entities";
 import type { Intent, CompileMetrics, Synthesis, NodeResult, Level, Goal, GoalProfile } from "@/lib/types";
 
 interface Bundle { intent: Intent; metrics: CompileMetrics; synthesis: Synthesis; results: Record<string, NodeResult>; facts: string[] }
@@ -179,23 +180,29 @@ function Verdict({ a, b, goal, goalProfile }: { a: Bundle; b: Bundle; goal: Goal
     if (d > edgeDelta) { edgeDelta = d; edge = f; }
   }
 
-  const GOAL_VERB: Record<Goal, string> = {
-    startup:  "bet on", build: "build with", career: "invest in",
-    learn: "deep-learn", research: "research",
-  };
-  const PROFILE_VERB: Record<string, string> = {
-    mvp: "ship an MVP with", production: "run in production on", scalable: "scale with",
-    "solo-dev": "build solo with", enterprise: "deploy enterprise-grade with",
-    faang: "ace FAANG interviews on", quant: "build quant systems with", infra: "architect infra with",
-    freelance: "freelance with", frontier: "research the frontier of", academic: "publish on",
-    "fast-track": "get up to speed on", "full-mastery": "master",
-  };
-  const goalVerb = PROFILE_VERB[goalProfile] ?? GOAL_VERB[goal] ?? "prioritise";
+  // Validate that the two topics are semantically coherent
+  const coherenceWarning = validateComparisonCoherence(win.intent.topic, lose.intent.topic);
+
+  // Institutional verdict — describes the comparison, NOT the user goal verb
+  const wTraj  = win.metrics.trajectory;
+  const lTraj  = lose.metrics.trajectory;
+  const wEco   = win.metrics.ecosystem_state.toLowerCase();
+  const lEco   = lose.metrics.ecosystem_state.toLowerCase();
+  const wScore = win.metrics.field_velocity;
+  const lScore = lose.metrics.field_velocity;
+  const delta  = wScore - lScore;
+
+  const trajectoryNote = (t: string) =>
+    t === "rising" ? "accelerating adoption trajectory" :
+    t === "stable" ? "stable production adoption" :
+    "decelerating momentum";
 
   const reasoning =
-    `${win.intent.topic} leads — Compile Score ${win.metrics.field_velocity} vs ${lose.metrics.field_velocity}, ` +
-    `${win.metrics.trajectory} trajectory at ${win.metrics.confidence}% confidence. Its decisive edge is ` +
-    `${edge.label.toLowerCase()} (+${edgeDelta}). Verdict: ${goalVerb} ${win.intent.topic}.`;
+    `${win.intent.topic} currently demonstrates ${trajectoryNote(wTraj)} — Compile Score ${wScore} vs ${lScore} (+${delta}), ` +
+    `with a decisive edge in ${edge.label.toLowerCase()}. Ecosystem state: ${wEco.toUpperCase()}, ` +
+    `${win.metrics.confidence}% cross-source confidence. ` +
+    `${lose.intent.topic} shows ${trajectoryNote(lTraj)} at ${lScore} — ${lEco.toUpperCase()} ecosystem — ` +
+    `viable in contexts where ${edge.label.toLowerCase()} is not the primary constraint.`;
 
   const winConf  = confidenceMeta(win.metrics.confidence,  win.metrics.trajectory);
   const loseConf = confidenceMeta(lose.metrics.confidence, lose.metrics.trajectory);
@@ -223,6 +230,11 @@ function Verdict({ a, b, goal, goalProfile }: { a: Bundle; b: Bundle; goal: Goal
             {winConf.label}
           </span>
         </div>
+        {coherenceWarning && (
+          <div className="mt-2 px-2.5 py-1.5 text-[0.72rem]" style={{ border: "1px solid var(--stamp)", color: "var(--stamp)" }}>
+            {coherenceWarning}
+          </div>
+        )}
         <p className="text-[0.9rem] leading-relaxed mt-2" style={{ color: "rgba(249,247,242,0.82)" }}>{reasoning}</p>
         <p className="mono text-[0.52rem] mt-2" style={{ color: "rgba(249,247,242,0.5)" }}>
           SCORING PROFILE: {goal.toUpperCase()} / {goalProfile.toUpperCase().replace(/-/g, " ")}

@@ -3,6 +3,7 @@
 // Explicit UI controls (level/goal/timeframe) always win over the parse.
 
 import type { Intent, Level, Goal, StartupType, GoalProfile, Domain, IntentPrecision } from "./types";
+import { resolveEntities } from "./entities";
 
 const GROQ_KEY   = process.env.GROQ_API_KEY ?? "";
 const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
@@ -48,13 +49,20 @@ const PROFILE_CONTEXT: Record<string, string> = {
 };
 
 export async function parseIntent(raw: string, ov: IntentOverrides = {}): Promise<Intent> {
-  const profile   = ov.goalProfile ?? (ov.startupType as GoalProfile | undefined);
-  const domain    = inferDomain(raw);
+  const profile = ov.goalProfile ?? (ov.startupType as GoalProfile | undefined);
+
+  // ── Entity resolution first — expand acronyms, lock domain ──────────────
+  const { expandedTopic, entityNotes, forcedDomain } = resolveEntities(raw);
+  const domain    = forcedDomain ?? inferDomain(raw);
   const precision = inferPrecision(raw, domain);
-  const fallback  = { ...heuristic(raw, ov), domain, precision };
+
+  // Use expanded topic as the basis for heuristic (better search terms)
+  const effectiveRaw = expandedTopic !== raw ? expandedTopic : raw;
+  const fallback  = { ...heuristic(effectiveRaw, ov), domain, precision };
   if (!GROQ_KEY) return { ...fallback, goalProfile: profile, startupType: ov.startupType };
 
-  const profileCtx = profile ? `\n\nActive profile context: ${PROFILE_CONTEXT[profile] ?? profile}` : "";
+  const profileCtx  = profile ? `\n\nActive profile context: ${PROFILE_CONTEXT[profile] ?? profile}` : "";
+  const entityCtx   = entityNotes ? `\n\nRESOLVED ENTITIES (use these exact expansions): ${entityNotes}` : "";
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -74,7 +82,7 @@ export async function parseIntent(raw: string, ov: IntentOverrides = {}): Promis
               "goal ('learn'|'build'|'research'|'career'|'startup'), " +
               "timeframe ('weekend'|'1 week'|'1 month'|'3 months'), " +
               "focus (string[] from: 'theory','implementation','papers','projects','career','startup'). " +
-              "Infer sensibly." + profileCtx,
+              "Infer sensibly. For topic: use the canonical expanded form (not the abbreviation) so it is search-friendly." + profileCtx + entityCtx,
           },
           { role: "user", content: raw },
         ],
@@ -97,7 +105,7 @@ export async function parseIntent(raw: string, ov: IntentOverrides = {}): Promis
       precision,
     };
   } catch {
-    return { ...fallback, goalProfile: profile, startupType: ov.startupType };
+    return { ...fallback, goalProfile: profile, startupType: ov.startupType, domain, precision };
   }
 }
 

@@ -176,102 +176,111 @@ function Console(p: {
 }) {
   return (
     <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={SPRING} className="relative min-h-screen w-full">
-      <div className="relative z-10 mx-auto max-w-3xl px-5 pt-28 pb-24">
-        <motion.div variants={riseIn} initial="hidden" animate="show" className="mb-4 flex items-center gap-3">
+      <div className="relative z-10 mx-auto max-w-6xl px-5 pt-20 pb-8">
+        {/* header — compact */}
+        <motion.div variants={riseIn} initial="hidden" animate="show" className="flex items-center gap-3 flex-wrap">
           <span className="cert">◇ AUTONOMOUS INTERNET INTELLIGENCE COMPILER</span>
+          <span className="mono text-[0.56rem]" style={{ color: "var(--ink-3)" }}>5 LIVE APIS · 1 WIRE-READY · ~10s RECONCILE</span>
         </motion.div>
-
-        <motion.h1 variants={riseIn} initial="hidden" animate="show" custom={1} className="display text-[clamp(2.4rem,7vw,4.6rem)]">
-          COMPILE THE INTERNET.
+        <motion.h1 variants={riseIn} initial="hidden" animate="show" custom={1} className="display text-[clamp(1.9rem,5vw,3.4rem)] mt-3">
+          COMPILE THE INTERNET. <span style={{ color: "var(--stamp)" }}>NOT A CHATBOT — A REALITY COMPILER.</span>
         </motion.h1>
-        <motion.p variants={riseIn} initial="hidden" animate="show" custom={2} className="display text-[clamp(1.1rem,3vw,1.9rem)] mt-2">
-          NOT A CHATBOT. <span style={{ color: "var(--stamp)" }}>A REALITY COMPILER.</span>
-        </motion.p>
-        <motion.p variants={riseIn} initial="hidden" animate="show" custom={3} className="mt-3 text-[1.02rem] leading-relaxed max-w-xl" style={{ color: "var(--ink-2)" }}>
-          The internet is fragmented across outdated tutorials, abandoned repos, and misleading hype cycles. COMPILE reconciles those signals — research, code, community, market — into one executable intelligence dossier. <strong>Link an intention.</strong>
+        <motion.p variants={riseIn} initial="hidden" animate="show" custom={2} className="mono text-[0.72rem] mt-1.5" style={{ color: "var(--ink-2)" }}>
+          Outdated tutorials · abandoned repos · misleading hype — COMPILE reconciles the noise into one executable intelligence dossier.
         </motion.p>
 
-        {/* manifest sheet */}
-        <motion.div animate={p.shaking ? submitShake : {}} variants={riseIn} initial="hidden" whileInView="show" viewport={{ once: true }} custom={3} className="brutal mt-8 p-5 sm:p-6">
-          <div className="flex items-center justify-between mb-3 pb-3" style={{ borderBottom: "2px solid var(--ink)" }}>
-            <span className="label">intelligence manifest // 001</span>
-            <span className="mono text-[0.56rem] flex items-center gap-1.5" style={{ color: "var(--stamp)" }}><span className="inline-block w-2 h-2" style={{ background: "var(--stamp)" }} /> ARMED</span>
-          </div>
-
-          <label className="label">intention</label>
-          <input value={p.topic} onChange={(e) => p.setTopic(e.target.value)} autoFocus
-            onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") p.onSubmit(); }}
-            placeholder="LINK AN INTENTION…"
-            className="block w-full bg-transparent display text-[clamp(1.4rem,3.4vw,2.2rem)] mt-1 focus:outline-none"
-            style={{ color: "var(--ink)" }} />
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-[auto_1fr]">
-            <span className="label pt-2">level</span><div><Seg value={p.level} options={LEVELS} onChange={p.setLevel} cap /></div>
-            <span className="label pt-2">goal</span>
-            <div className="inline-flex flex-wrap" style={{ border: "2px solid var(--ink)", width: "fit-content" }}>
-              {GOALS.map((g, i) => (
-                <button key={g.id} onClick={() => p.setGoal(g.id)} className="mono text-[0.64rem] px-2.5 py-1.5 press"
-                  style={{ borderLeft: i ? "2px solid var(--ink)" : "none", background: p.goal === g.id ? "var(--stamp)" : "var(--paper)", color: p.goal === g.id ? "var(--paper)" : "var(--ink-2)" }}>{g.label}</button>
+        {/* dense 2-column workspace */}
+        <div className="mt-5 grid gap-4 lg:grid-cols-[1.12fr_0.88fr] items-start">
+          {/* LEFT — manifest */}
+          <motion.div animate={p.shaking ? submitShake : {}} className="brutal p-5">
+            <div className="flex items-center justify-between mb-3 pb-2.5" style={{ borderBottom: "2px solid var(--ink)" }}>
+              <span className="label">intelligence manifest // 001</span>
+              <span className="mono text-[0.56rem] flex items-center gap-1.5" style={{ color: "var(--stamp)" }}><span className="inline-block w-2 h-2 pulse-dot" style={{ background: "var(--stamp)" }} /> ARMED</span>
+            </div>
+            <label className="label">intention</label>
+            <input value={p.topic} onChange={(e) => p.setTopic(e.target.value)} autoFocus
+              onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") p.onSubmit(); }}
+              placeholder="LINK AN INTENTION…"
+              className="block w-full bg-transparent display text-[clamp(1.3rem,3vw,2rem)] mt-1 focus:outline-none" style={{ color: "var(--ink)" }} />
+            <div className="mt-4 grid gap-2.5">
+              <div className="flex items-center gap-2 flex-wrap"><span className="label w-10 shrink-0">level</span><Seg value={p.level} options={LEVELS} onChange={p.setLevel} cap /></div>
+              <div className="flex items-center gap-2 flex-wrap"><span className="label w-10 shrink-0">goal</span>
+                <div className="inline-flex flex-wrap" style={{ border: "2px solid var(--ink)", width: "fit-content" }}>
+                  {GOALS.map((g, i) => (
+                    <button key={g.id} onClick={() => p.setGoal(g.id)} className="mono text-[0.62rem] px-2 py-1.5 press"
+                      style={{ borderLeft: i ? "2px solid var(--ink)" : "none", background: p.goal === g.id ? "var(--stamp)" : "var(--paper)", color: p.goal === g.id ? "var(--paper)" : "var(--ink-2)" }}>{g.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap"><span className="label w-10 shrink-0">depth</span><Seg value={p.depth} options={DEPTHS} onChange={p.setDepth} /></div>
+            </div>
+            <textarea value={p.free} onChange={(e) => p.setFree(e.target.value)} rows={2}
+              onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") p.onSubmit(); }}
+              placeholder="strategic context — 'decide the durable systems language'…"
+              className="brutal-inset mt-3 block w-full p-2.5 resize-none text-[0.84rem] focus:outline-none" style={{ color: "var(--ink-2)" }} />
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span className="mono text-[0.54rem]" style={{ color: "var(--ink-3)" }}>⌘/CTRL + ENTER</span>
+              <button onClick={p.onSubmit} className="press btn-stamp px-6 py-2.5 flex items-center gap-2 text-[0.88rem]">COMPILE <ArrowUR s={15} /></button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {SAMPLES.map((s) => (
+                <button key={s.topic} onClick={() => p.onSample(s)} className="press brutal-sm bg-transparent px-2.5 py-1 mono text-[0.6rem]" style={{ color: "var(--ink-2)" }}>{s.topic}</button>
               ))}
             </div>
-            <span className="label pt-2">depth</span><div><Seg value={p.depth} options={DEPTHS} onChange={p.setDepth} /></div>
-          </div>
+            {p.error && <p className="mt-3 mono text-sm" style={{ color: "var(--stamp)" }}>{p.error}</p>}
+          </motion.div>
 
-          <textarea value={p.free} onChange={(e) => p.setFree(e.target.value)} rows={2}
-            onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") p.onSubmit(); }}
-            placeholder="strategic context — 'decide the durable systems language', 'ship to production'…"
-            className="brutal-inset mt-5 block w-full p-3 resize-none text-[0.88rem] focus:outline-none" style={{ color: "var(--ink-2)" }} />
-
-          <div className="mt-5 flex items-center justify-between gap-3">
-            <span className="mono text-[0.56rem]" style={{ color: "var(--ink-3)" }}>⌘/CTRL + ENTER</span>
-            <button onClick={p.onSubmit} className="press btn-stamp px-7 py-3 flex items-center gap-2 text-[0.92rem]">COMPILE <ArrowUR s={16} /></button>
-          </div>
-        </motion.div>
-
-        {/* sample manifests */}
-        <div className="mt-4 flex flex-wrap gap-2">
-          {SAMPLES.map((s) => (
-            <button key={s.topic} onClick={() => p.onSample(s)} className="press brutal-sm bg-transparent px-3 py-1.5 mono text-[0.66rem]" style={{ color: "var(--ink-2)" }}>{s.topic}</button>
-          ))}
-        </div>
-
-        {/* source registry */}
-        <div className="mt-8">
-          <p className="label mb-2">signal sources // 5 live · 1 wire-ready</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {NODE_ORDER.map((id) => (
-              <div key={id} className="brutal-sm bg-transparent px-3 py-2 flex items-center gap-2">
-                <SourceLogo source={SOURCES[id].source} />
-                <span className="text-[0.74rem] font-semibold flex-1">{SOURCES[id].label}</span>
-                <span className="mono text-[0.5rem] px-1.5 py-0.5" style={{ background: SOURCES[id].live ? "var(--ink)" : "var(--stamp)", color: "var(--paper)" }}>{SOURCES[id].live ? "LIVE" : "WIRE"}</span>
+          {/* RIGHT — showcase + sources + yields (cute/info pulled up) */}
+          <div className="grid gap-3">
+            <Link href="/compare" className="press brutal p-4 block">
+              <div className="flex items-center justify-between mb-2 pb-2" style={{ borderBottom: "2px solid var(--ink)" }}>
+                <span className="label" style={{ fontSize: "0.5rem" }}>sample // rust vs go</span>
+                <span className="mono text-[0.54rem]" style={{ color: "var(--stamp)" }}>RUN LIVE ▸</span>
               </div>
-            ))}
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <div><p className="display text-[1.9rem] leading-none">76</p><p className="mono text-[0.5rem]" style={{ color: "var(--ink-3)" }}>RUST · EXPLOSIVE ↑</p></div>
+                <span className="display text-[0.95rem]" style={{ color: "var(--stamp)" }}>VS</span>
+                <div className="text-right"><p className="display text-[1.9rem] leading-none">61</p><p className="mono text-[0.5rem]" style={{ color: "var(--ink-3)" }}>GO · GROWING →</p></div>
+              </div>
+              <p className="text-[0.72rem] mt-2" style={{ color: "var(--ink-2)" }}><strong style={{ color: "var(--ink)" }}>Verdict:</strong> Rust leads on repository velocity + systems-level adoption.</p>
+            </Link>
+
+            <div className="brutal-sm bg-transparent p-3">
+              <p className="label mb-2" style={{ fontSize: "0.5rem" }}>signal sources // 5 live · 1 wire</p>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                {NODE_ORDER.map((id) => (
+                  <div key={id} className="flex items-center gap-1.5">
+                    <SourceLogo source={SOURCES[id].source} />
+                    <span className="text-[0.68rem] font-semibold flex-1 truncate">{SOURCES[id].label}</span>
+                    <span className="mono" style={{ fontSize: "0.42rem", color: SOURCES[id].live ? "var(--ink-3)" : "var(--stamp)" }}>{SOURCES[id].live ? "LIVE" : "WIRE"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="brutal-sm bg-transparent p-3">
+              <p className="label mb-2" style={{ fontSize: "0.5rem" }}>every dossier yields</p>
+              <div className="grid gap-1 mono text-[0.62rem]" style={{ color: "var(--ink-2)" }}>
+                <span>▸ Strategic recommendation + conviction</span>
+                <span>▸ Compile Score breakdown (7 signals)</span>
+                <span>▸ Ecosystem risk matrix</span>
+                <span>▸ 4-phase build compiler + ranked repos</span>
+              </div>
+            </div>
           </div>
         </div>
-        {/* field notes — cute + informative */}
-        <div className="mt-9 grid gap-5 sm:grid-cols-3">
-          <Sticky index={0} label="how it scores" text="Field Velocity = commit rate × paper cadence × startup adoption. 76+ means an explosive ecosystem." />
-          <Sticky index={1} label="pro tip" text="Inside a dossier, hover the blacked-out Community blocks to declassify the real ecosystem friction." />
-          <Sticky index={2} label="it remembers" text="Every compile is filed to Archives — reopen it as a dossier or a live 3D knowledge graph." />
+
+        {/* cute field notes — pulled up, full width, roomy */}
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <Sticky index={0} label="how it scores" text="Compile Score = commit rate × paper cadence × startup adoption. 76+ = explosive ecosystem." />
+          <Sticky index={1} label="pro tip" text="Hover the blacked-out Community blocks in a dossier to declassify the real ecosystem friction." />
+          <Sticky index={2} label="it remembers" text="Every compile is filed to Archives — reopen as a dossier or a live 3D knowledge graph." />
         </div>
-        {/* showcase — strategic intelligence sample */}
-        <Link href="/compare" className="press brutal mt-4 p-5 block">
-          <div className="flex items-center justify-between mb-3 pb-2" style={{ borderBottom: "2px solid var(--ink)" }}>
-            <span className="label">sample reconciliation // rust vs go for ai infra</span>
-            <span className="mono text-[0.56rem]" style={{ color: "var(--stamp)" }}>RUN LIVE ▸</span>
-          </div>
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-            <div><p className="display text-[2.2rem] leading-none">76</p><p className="mono text-[0.56rem]" style={{ color: "var(--ink-3)" }}>RUST · EXPLOSIVE ↑</p></div>
-            <span className="display text-[1.1rem]" style={{ color: "var(--stamp)" }}>VS</span>
-            <div className="text-right"><p className="display text-[2.2rem] leading-none">61</p><p className="mono text-[0.56rem]" style={{ color: "var(--ink-3)" }}>GO · GROWING →</p></div>
-          </div>
-          <p className="text-[0.8rem] mt-3" style={{ color: "var(--ink-2)" }}><strong style={{ color: "var(--ink)" }}>Verdict:</strong> Rust leads on repository velocity and systems-level startup adoption — the durable infrastructure bet.</p>
-        </Link>
-        <div className="mt-9 brutal p-6 text-center">
-          <p className="display text-[clamp(1.1rem,3.2vw,1.9rem)]">THE INTERNET WAS BUILT FOR WEBSITES.</p>
-          <p className="display text-[clamp(1.1rem,3.2vw,1.9rem)]" style={{ color: "var(--stamp)" }}>COMPILE REBUILDS IT FOR MINDS.</p>
+
+        {/* philosophical strip — thin */}
+        <div className="brutal mt-4 p-3.5 text-center">
+          <p className="display text-[clamp(1rem,2.6vw,1.5rem)]">THE INTERNET WAS BUILT FOR WEBSITES. <span style={{ color: "var(--stamp)" }}>COMPILE REBUILDS IT FOR MINDS.</span></p>
         </div>
-        {p.error && <p className="mt-4 mono text-sm" style={{ color: "var(--stamp)" }}>{p.error}</p>}
       </div>
     </motion.section>
   );

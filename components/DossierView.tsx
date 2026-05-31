@@ -30,7 +30,7 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
   const traj = { rising: "↑ RISING", stable: "→ STABLE", declining: "↓ DECLINING" }[m.trajectory];
 
   return (
-    <div className="relative z-10 mx-auto max-w-4xl px-5 pt-24 pb-24">
+    <div className="relative z-10 mx-auto max-w-4xl px-5 pt-20 pb-16">
       {/* classification strip */}
       <div className="flex items-center justify-between gap-2 flex-wrap mb-3 px-1">
         <span className="mono text-[0.54rem] tracking-[0.22em]" style={{ color: "var(--ink-3)" }}>◇ CLASSIFICATION // OPEN-SOURCE INTELLIGENCE · COMPILE-OSINT</span>
@@ -257,9 +257,9 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
 
 function Block({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) {
   return (
-    <motion.div variants={riseIn} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-60px" }} className="mt-6 brutal p-5">
-      <div className="flex items-baseline justify-between mb-4 pb-2" style={{ borderBottom: "2px solid var(--ink)" }}>
-        <h2 className="display text-[1.25rem]">{title}</h2><span className="label">{sub}</span>
+    <motion.div variants={riseIn} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-60px" }} className="mt-4 brutal p-4">
+      <div className="flex items-baseline justify-between mb-3 pb-2" style={{ borderBottom: "2px solid var(--ink)" }}>
+        <h2 className="display text-[1.2rem]">{title}</h2><span className="label">{sub}</span>
       </div>
       {children}
     </motion.div>

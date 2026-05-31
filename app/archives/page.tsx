@@ -19,7 +19,7 @@ export default function ArchivesPage() {
   return (
     <main className="relative min-h-screen overflow-x-hidden">
       <Chrome />
-      <div className="relative z-10 mx-auto max-w-5xl px-5 pt-24 pb-24">
+      <div className="relative z-10 mx-auto max-w-5xl px-5 pt-20 pb-14">
         <motion.div variants={riseIn} initial="hidden" animate="show">
           <span className="cert">◇ FILING LIBRARY</span>
           <h1 className="display text-[clamp(2rem,5vw,3.4rem)] mt-3">ARCHIVES</h1>

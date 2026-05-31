@@ -266,8 +266,8 @@ export default function RealityGraph({ nodes, states, phase, offsetX = 0, fieldV
 
       const dest = ph === "complete" ? camDone : ph === "idle" ? camIdle : camWork;
       const ox = offRef.current;
-      // On portrait/mobile, pull camera back so nodes don't fill the frame
-      const portraitZBoost = camera.aspect < 0.9 ? 4.5 : camera.aspect < 1.2 ? 2.0 : 0;
+      // On portrait/mobile, pull camera back so full constellation is visible
+      const portraitZBoost = camera.aspect < 0.75 ? 9.0 : camera.aspect < 0.9 ? 7.0 : camera.aspect < 1.2 ? 2.5 : 0;
       const swing = ph === "idle" ? 1.4 : compilingNow ? 1.2 : completeNow ? 0.6 : 0.5;
       const rate  = ph === "idle" ? 0.1 : compilingNow ? 0.26 : 0.18;
       camera.position.lerp(new THREE.Vector3(

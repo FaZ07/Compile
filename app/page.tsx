@@ -253,10 +253,10 @@ function Console(p: {
         <motion.div variants={riseIn} initial="hidden" animate="show" className="flex items-center gap-3 flex-wrap">
           <span className="cert">◇ AUTONOMOUS INTERNET INTELLIGENCE COMPILER</span>
         </motion.div>
-        <motion.h1 variants={riseIn} initial="hidden" animate="show" custom={1} className="display text-[clamp(1.7rem,4.4vw,3rem)] mt-2">
-          COMPILE THE INTERNET.<br /><span style={{ color: "var(--stamp)" }}>ONE VERDICT. ZERO NOISE.</span>
+        <motion.h1 variants={riseIn} initial="hidden" animate="show" custom={1} className="display text-[clamp(1.7rem,4.4vw,3rem)] mt-2 text-center sm:text-left">
+          COMPILE THE INTERNET.<br /><span style={{ color: "var(--stamp)" }}>ONE VERDICT.</span>
         </motion.h1>
-        <motion.p variants={riseIn} initial="hidden" animate="show" custom={2} className="mono text-[0.78rem] mt-2 max-w-xl leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        <motion.p variants={riseIn} initial="hidden" animate="show" custom={2} className="mono text-[0.78rem] mt-2 max-w-xl leading-relaxed text-center sm:text-left" style={{ color: "var(--ink-2)" }}>
           The internet is the largest database in human history. It still can&apos;t tell you exactly what to do next.
         </motion.p>
 

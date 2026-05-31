@@ -31,6 +31,11 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
 
   return (
     <div className="relative z-10 mx-auto max-w-4xl px-5 pt-24 pb-24">
+      {/* classification strip */}
+      <div className="flex items-center justify-between gap-2 flex-wrap mb-3 px-1">
+        <span className="mono text-[0.54rem] tracking-[0.22em]" style={{ color: "var(--ink-3)" }}>◇ CLASSIFICATION // OPEN-SOURCE INTELLIGENCE · COMPILE-OSINT</span>
+        <span className="mono text-[0.54rem] tracking-[0.22em]" style={{ color: "var(--ink-3)" }}>REF-{intent.topic.replace(/[^a-z0-9]/gi, "").slice(0, 8).toUpperCase()}</span>
+      </div>
       {/* header */}
       <motion.div variants={riseIn} initial="hidden" animate="show" className="brutal p-5">
         <div className="flex items-start justify-between gap-3 flex-wrap pb-3" style={{ borderBottom: "2px solid var(--ink)" }}>
@@ -38,7 +43,7 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
             <p className="label">compiled dossier // {intent.goal} · {intent.level} · {intent.timeframe}</p>
             <h1 className="display text-[clamp(1.8rem,4.6vw,3rem)] mt-1">{intent.topic}</h1>
           </div>
-          <span className="cert">✓ {m.confidence_label}</span>
+          <span className="cert" style={m.confidence < 45 ? { background: "var(--stamp)", color: "var(--paper)" } : undefined}>{m.confidence < 45 ? "⚠" : "✓"} {m.confidence_label}</span>
         </div>
         <div className="grid gap-4 sm:grid-cols-[180px_1fr] mt-4 items-center">
           <div className="text-center brutal-inset p-3">
@@ -56,6 +61,13 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
           </div>
         </div>
       </motion.div>
+
+      {(m.trajectory === "declining" || m.confidence < 45) && (
+        <div className="mt-3 p-3 flex items-center gap-2 flex-wrap" style={{ border: "2px solid var(--stamp)", background: "rgba(255,69,0,0.07)" }}>
+          <span className="mono text-[0.7rem] font-bold" style={{ color: "var(--stamp)" }}>⚠ {m.trajectory === "declining" ? "ECOSYSTEM DECELERATION DETECTED" : "SIGNAL INSTABILITY DETECTED"}</span>
+          <span className="text-[0.76rem]" style={{ color: "var(--ink-2)" }}>{m.trajectory === "declining" ? "Adoption is cooling — pair with a modern successor before committing engineering effort." : "Cross-source agreement is low — treat these conclusions as provisional intelligence."}</span>
+        </div>
+      )}
 
       <Block title="COMPILE SCORE BREAKDOWN" sub="weighted signal reconciliation">
         <div className="grid gap-2.5">

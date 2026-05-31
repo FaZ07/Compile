@@ -254,6 +254,19 @@ function Console(p: {
           <Sticky index={1} label="pro tip" text="Inside a dossier, hover the blacked-out Community blocks to declassify the real ecosystem friction." />
           <Sticky index={2} label="it remembers" text="Every compile is filed to Archives — reopen it as a dossier or a live 3D knowledge graph." />
         </div>
+        {/* showcase — strategic intelligence sample */}
+        <Link href="/compare" className="press brutal mt-4 p-5 block">
+          <div className="flex items-center justify-between mb-3 pb-2" style={{ borderBottom: "2px solid var(--ink)" }}>
+            <span className="label">sample reconciliation // rust vs go for ai infra</span>
+            <span className="mono text-[0.56rem]" style={{ color: "var(--stamp)" }}>RUN LIVE ▸</span>
+          </div>
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <div><p className="display text-[2.2rem] leading-none">76</p><p className="mono text-[0.56rem]" style={{ color: "var(--ink-3)" }}>RUST · EXPLOSIVE ↑</p></div>
+            <span className="display text-[1.1rem]" style={{ color: "var(--stamp)" }}>VS</span>
+            <div className="text-right"><p className="display text-[2.2rem] leading-none">61</p><p className="mono text-[0.56rem]" style={{ color: "var(--ink-3)" }}>GO · GROWING →</p></div>
+          </div>
+          <p className="text-[0.8rem] mt-3" style={{ color: "var(--ink-2)" }}><strong style={{ color: "var(--ink)" }}>Verdict:</strong> Rust leads on repository velocity and systems-level startup adoption — the durable infrastructure bet.</p>
+        </Link>
         <div className="mt-9 brutal p-6 text-center">
           <p className="display text-[clamp(1.1rem,3.2vw,1.9rem)]">THE INTERNET WAS BUILT FOR WEBSITES.</p>
           <p className="display text-[clamp(1.1rem,3.2vw,1.9rem)]" style={{ color: "var(--stamp)" }}>COMPILE REBUILDS IT FOR MINDS.</p>

@@ -132,6 +132,7 @@ export default function RealityGraph({ nodes, states, phase, offsetX = 0 }: Prop
       const ph = phaseRef.current; const latest = statesRef.current;
 
       const compilingNow = ph === "compiling";
+      const completeNow = ph === "complete";
       core.rotation.y += dt * (compilingNow ? 0.5 : 0.16); core.rotation.x = Math.sin(t * 0.3) * 0.06;
       coreMesh.scale.setScalar(1 + Math.sin(t * (compilingNow ? 4 : 1.5)) * (compilingNow ? 0.07 : 0.03));
       (shell.material as THREE.LineBasicMaterial).opacity = 0.55 + Math.sin(t * (compilingNow ? 5 : 2)) * 0.3;
@@ -147,21 +148,21 @@ export default function RealityGraph({ nodes, states, phase, offsetX = 0 }: Prop
         mat.emissive.lerp(col, 0.12);
         mat.emissiveIntensity = THREE.MathUtils.lerp(mat.emissiveIntensity, n.state === "running" ? 0.5 : n.state === "done" ? 0.28 : 0.14, 0.15);
         n.mesh.rotation.y += dt * (n.state === "running" ? 1.5 : 0.25);
-        const pulse = n.state === "running" ? 1 + Math.sin(t * 7) * 0.12 : 1;
+        const pulse = n.state === "running" ? 1 + Math.sin(t * 7) * 0.12 : completeNow ? 1 + Math.sin(t * 1.5 + n.angle) * 0.05 : 1;
         n.mesh.scale.setScalar(THREE.MathUtils.lerp(n.mesh.scale.x, pulse + n.flash * 0.5, 0.2));
 
         const lmat = n.line.material as THREE.LineBasicMaterial;
         lmat.color.lerp(n.state === "running" ? STAMP : INK, 0.1);
-        const idlePulse = compilingNow ? 0.34 + Math.sin(t * 3 + n.angle * 2) * 0.22 : 0.28;
-        lmat.opacity = THREE.MathUtils.lerp(lmat.opacity, n.state === "running" ? 0.92 : n.state === "done" ? 0.45 : idlePulse, 0.1);
+        const idlePulse = (compilingNow || completeNow) ? 0.3 + Math.sin(t * 2.4 + n.angle * 2) * 0.18 : 0.28;
+        lmat.opacity = THREE.MathUtils.lerp(lmat.opacity, n.state === "running" ? 0.92 : n.state === "done" ? 0.5 : idlePulse, 0.1);
 
-        // edges fire continuously while compiling — data ingested source → core
-        const flowing = compilingNow || n.state === "running";
+        // edges fire continuously — ingestion while compiling, gentle trace when resolved
+        const flowing = compilingNow || completeNow || n.state === "running";
         const pmat = n.particles.material as THREE.PointsMaterial;
-        pmat.opacity = THREE.MathUtils.lerp(pmat.opacity, n.state === "running" ? 1 : compilingNow ? 0.6 : 0, 0.12);
+        pmat.opacity = THREE.MathUtils.lerp(pmat.opacity, n.state === "running" ? 1 : compilingNow ? 0.6 : completeNow ? 0.34 : 0, 0.12);
         if (flowing) {
           const arr = n.particles.geometry.attributes.position as THREE.BufferAttribute;
-          const speed = n.state === "running" ? 0.95 : 0.5;
+          const speed = n.state === "running" ? 0.95 : completeNow ? 0.4 : 0.5;
           for (let k = 0; k < arr.count; k++) {
             const prog = 1 - (((t * speed) + k / arr.count) % 1); // source → core
             arr.setXYZ(k, Math.cos(n.angle) * RADIUS * prog, 0, Math.sin(n.angle) * RADIUS * prog);

@@ -14,6 +14,7 @@ export default function Chrome() {
 
   const links: [string, string][] = [
     ["CONSOLE", "/"],
+    ["COMPARE", "/compare"],
     ["DOSSIER", recent ? `/dossier/${recent}` : "/archives"],
     ["GRAPH", recent ? `/graph/${recent}` : "/archives"],
     ["RADAR", "/radar"],

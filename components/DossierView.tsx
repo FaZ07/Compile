@@ -62,6 +62,27 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
         </div>
       </motion.div>
 
+      {s.recommendation && (
+        <motion.div variants={riseIn} initial="hidden" whileInView="show" viewport={{ once: true }} className="mt-3 brutal p-5" style={{ background: "var(--ink)", color: "var(--paper)" }}>
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <p className="mono text-[0.54rem] tracking-[0.22em]" style={{ color: "var(--stamp)" }}>◇ STRATEGIC RECOMMENDATION</p>
+              <p className="display text-[clamp(1.5rem,4vw,2.4rem)] mt-1">{s.recommendation.verdict}</p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="mono text-[1.9rem] font-bold leading-none" style={{ color: "var(--stamp)" }}>{s.recommendation.confidence}%</p>
+              <p className="mono text-[0.5rem] tracking-widest" style={{ color: "rgba(249,247,242,0.6)" }}>CONVICTION BAND</p>
+              <div className="h-2 mt-1.5 w-28" style={{ border: "1px solid rgba(249,247,242,0.4)" }}><div className="h-full" style={{ width: `${s.recommendation.confidence}%`, background: "var(--stamp)" }} /></div>
+            </div>
+          </div>
+          <ul className="mt-3 grid gap-1.5">
+            {s.recommendation.reasoning.map((rr, i) => (
+              <li key={i} className="flex items-start gap-2 text-[0.84rem]" style={{ color: "rgba(249,247,242,0.86)" }}><span style={{ color: "var(--stamp)" }}>▸</span>{rr}</li>
+            ))}
+          </ul>
+        </motion.div>
+      )}
+
       {(m.trajectory === "declining" || m.confidence < 45) && (
         <div className="mt-3 p-3 flex items-center gap-2 flex-wrap" style={{ border: "2px solid var(--stamp)", background: "rgba(255,69,0,0.07)" }}>
           <span className="mono text-[0.7rem] font-bold" style={{ color: "var(--stamp)" }}>⚠ {m.trajectory === "declining" ? "ECOSYSTEM DECELERATION DETECTED" : "SIGNAL INSTABILITY DETECTED"}</span>
@@ -80,6 +101,22 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
           ))}
         </div>
       </Block>
+
+      {s.risks && s.risks.length > 0 && (
+        <Block title="ECOSYSTEM RISK MATRIX" sub="signal-derived threat assessment">
+          <div className="grid gap-2">
+            {s.risks.map((rk) => {
+              const col = rk.severity === "high" ? "var(--stamp)" : rk.severity === "medium" ? "var(--ink)" : "var(--ink-3)";
+              return (
+                <div key={rk.category} className="flex items-center gap-3 p-2.5" style={{ border: "2px solid var(--ink)" }}>
+                  <span className="mono text-[0.54rem] px-2 py-1 shrink-0 text-center" style={{ background: col, color: "var(--paper)", minWidth: 70 }}>{rk.severity.toUpperCase()}</span>
+                  <div className="flex-1 min-w-0"><p className="font-bold text-[0.82rem]">{rk.category}</p><p className="text-[0.74rem]" style={{ color: "var(--ink-2)" }}>{rk.note}</p></div>
+                </div>
+              );
+            })}
+          </div>
+        </Block>
+      )}
 
       <Block title="STRATEGIC VERDICT" sub="reconciled intelligence synthesis">
         <Reveal text={s.headline} className="display text-[clamp(1.4rem,3.4vw,2.2rem)]" stagger={40} />

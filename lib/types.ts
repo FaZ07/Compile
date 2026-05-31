@@ -121,6 +121,19 @@ export interface ProjectIdea {
   why: string;
 }
 
+export interface Recommendation {
+  verdict: string;                          // "HIGH CONVICTION · COMMIT"
+  conviction: "HIGH" | "MODERATE" | "LOW";
+  confidence: number;
+  reasoning: string[];
+}
+
+export interface EcosystemRisk {
+  category: string;
+  severity: "low" | "medium" | "high";
+  note: string;
+}
+
 export interface Synthesis {
   headline: string;
   summary: string;
@@ -128,6 +141,8 @@ export interface Synthesis {
   projects: ProjectIdea[];
   insights: string[];
   trend_note: string;
+  recommendation?: Recommendation;          // deterministic strategic verdict
+  risks?: EcosystemRisk[];                   // signal-derived risk matrix
 }
 
 // ── SSE protocol ────────────────────────────────────────────────

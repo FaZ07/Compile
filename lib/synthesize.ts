@@ -2,7 +2,7 @@
 // Groq-driven; deterministic template fallback so the demo always lands.
 
 import type {
-  Intent, NodeResult, Synthesis, RoadmapPhase, ProjectIdea,
+  Intent, NodeResult, Synthesis, RoadmapPhase, ProjectIdea, Recommendation, EcosystemRisk,
   Paper, Repo, Tutorial, Discussion, TrendData, ContextData, CompileMetrics,
 } from "./types";
 
@@ -15,7 +15,8 @@ export async function synthesize(
   metrics: CompileMetrics,
 ): Promise<Synthesis> {
   const facts    = extractFacts(intent, results, metrics);
-  const fallback = template(intent, facts);
+  const strat    = strategicLayer(intent, facts, metrics);
+  const fallback = { ...template(intent, facts), ...strat };
   if (!GROQ_KEY) return fallback;
 
   try {
@@ -62,10 +63,37 @@ export async function synthesize(
       projects:   Array.isArray(p.projects) && p.projects.length ? p.projects.map(normProject) : fallback.projects,
       insights:   strArray(p.insights).length ? strArray(p.insights)                            : fallback.insights,
       trend_note: str(p.trend_note) || fallback.trend_note,
+      ...strat,
     };
   } catch {
     return fallback;
   }
+}
+
+// Deterministic strategic cognition — recommendation + risk matrix from real
+// signals. Always present (no LLM dependency), always defensible.
+function strategicLayer(intent: Intent, f: ReturnType<typeof extractFacts>, m: CompileMetrics): { recommendation: Recommendation; risks: EcosystemRisk[] } {
+  const bv = (key: string) => m.breakdown.find((x) => x.label.toLowerCase().includes(key))?.value ?? 50;
+  const action = ({ learn: "LEARN", build: "BUILD", career: "COMMIT", research: "INVESTIGATE", startup: "BET" } as Record<string, string>)[intent.goal] ?? "LEARN";
+  const conviction: "HIGH" | "MODERATE" | "LOW" =
+    m.trajectory === "declining" ? "LOW" : m.field_velocity >= 70 ? "HIGH" : m.field_velocity >= 45 ? "MODERATE" : "LOW";
+  const verdict = m.trajectory === "declining" ? `DEPRIORITISE · ${action}` : `${conviction} CONVICTION · ${action}`;
+
+  const stars = f.top_repos[0]?.stars ?? 0;
+  const reasoning = [
+    `Repository gravity ${stars >= 20000 ? "strong" : stars >= 5000 ? "moderate" : "early-stage"} — lead implementation ${f.top_repos[0]?.name ?? "n/a"} at ${stars.toLocaleString()} stars.`,
+    `Research cadence ${bv("arxiv") >= 55 ? "active" : "maturing"} (${bv("arxiv")}/100); commit velocity ${bv("commit") >= 55 ? "high" : "intermittent"} (${bv("commit")}/100).`,
+    `${m.trajectory.toUpperCase()} trajectory reconciled at ${m.confidence}% cross-source agreement — ${m.sources_ok}/${m.sources_queried} signals locked.`,
+  ];
+
+  const sev = (n: number, hi: number, mid: number): "low" | "medium" | "high" => (n >= hi ? "low" : n >= mid ? "medium" : "high");
+  const risks: EcosystemRisk[] = [
+    { category: "Production Stability", severity: sev(bv("commit"), 60, 30), note: bv("commit") >= 60 ? "Active commit cadence across lead repositories." : "Maintenance signal intermittent — verify repo liveness before adoption." },
+    { category: "Community Consensus", severity: sev(m.confidence, 70, 45), note: m.confidence >= 70 ? "Multi-source agreement is high and consistent." : "Cross-source signal is fragmented — treat conclusions as provisional." },
+    { category: "Tooling Volatility", severity: m.field_velocity >= 76 ? "high" : m.trajectory === "rising" ? "medium" : "low", note: m.field_velocity >= 76 ? "Explosive growth — orchestration patterns shift rapidly." : m.trajectory === "rising" ? "Standards still consolidating; expect churn." : "Mature, stable tooling surface." },
+  ];
+
+  return { recommendation: { verdict, conviction, confidence: m.confidence, reasoning }, risks };
 }
 
 // ── normalisers — guarantee the typed shape regardless of LLM drift ──

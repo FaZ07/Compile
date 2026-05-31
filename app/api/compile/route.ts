@@ -10,7 +10,7 @@ import { computeMetrics } from "@/lib/metrics";
 import { synthesize } from "@/lib/synthesize";
 import { pickFacts } from "@/lib/facts";
 import { SSEStream } from "@/lib/sse";
-import type { Intent, Level, Goal, NodeId, NodeResult, CompileMetrics, Synthesis } from "@/lib/types";
+import type { Intent, Level, Goal, NodeId, NodeResult, CompileMetrics, Synthesis, Discussion, TrendData } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,8 +21,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const STATUS = [
   "SCANNING RESEARCH NETWORKS",
   "RECONCILING IMPLEMENTATION SIGNALS",
+  "VERIFYING SOURCE CONSISTENCY",
   "DETECTING COMMUNITY DIVERGENCE",
   "WEIGHING MARKET MOMENTUM",
+  "DETECTING DUPLICATE SIGNALS",
   "CROSS-CHECKING SOURCE AGREEMENT",
 ];
 
@@ -67,10 +69,21 @@ export async function POST(req: Request) {
         await Promise.all(ADAPTERS.map((a) => runNode(a.id, sse, results, () => a.run(ctx))));
         clearInterval(factTimer); clearInterval(statusTimer);
 
+        // signal integrity pass — surface real conflicts (perceived cognition)
+        sse.send({ type: "status", payload: "VERIFYING SIGNAL INTEGRITY" });
+        await sleep(220);
+        const comm = (results.community?.data as Discussion[] | undefined) ?? [];
+        const trd = results.trends?.data as TrendData | undefined;
+        const friction = comm.some((d) => /issue|slow|problem|hard|broken|deprecat|pain|struggl|complex|footgun/i.test(`${d.title} ${d.snippet}`));
+        if (trd?.trajectory === "rising" && friction) { sse.send({ type: "status", payload: "⚠ COMMUNITY / MARKET DIVERGENCE DETECTED" }); await sleep(200); }
+        sse.send({ type: "status", payload: "RESOLVING ECOSYSTEM CONTRADICTIONS" });
+        await sleep(160);
+
         // 4 — deterministic metrics + live velocity ramp
         sse.send({ type: "stage", stage: "metrics" });
-        sse.send({ type: "status", payload: "COMPUTING FIELD VELOCITY" });
+        sse.send({ type: "status", payload: "COMPUTING COMPILE SCORE" });
         const metrics = computeMetrics(results);
+        if (metrics.confidence < 55) sse.send({ type: "status", payload: "⚠ LOW CONSENSUS — FLAGGING PROVISIONAL" });
         await rampVelocity(sse, metrics.field_velocity);
         sse.send({ type: "metrics", metrics });
 

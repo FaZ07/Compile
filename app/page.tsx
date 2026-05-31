@@ -371,8 +371,8 @@ function Console(p: {
           </div>
         </div>
 
-        <div className="brutal mt-4 p-3 text-center">
-          <p className="display text-[clamp(0.85rem,2.1vw,1.3rem)] text-center w-full">Google gives you websites. <span style={{ color: "var(--ink-3)" }}>·</span> <span style={{ color: "var(--ink-2)" }}>AI chats give you answers.</span> <span style={{ color: "var(--ink-3)" }}>·</span> <span style={{ color: "var(--stamp)" }}>COMPILE gives you conviction.</span></p>
+        <div className="brutal mt-4 p-3.5 text-center">
+          <p className="display text-[clamp(1rem,2.6vw,1.5rem)]">Google gives you websites. <span style={{ color: "var(--ink-3)" }}>·</span> <span style={{ color: "var(--ink-2)" }}> AI chats give you answers.</span> <span style={{ color: "var(--ink-3)" }}>·</span> <span style={{ color: "var(--stamp)" }}> COMPILE gives you conviction.</span></p>
         </div>
       </div>
     </motion.section>

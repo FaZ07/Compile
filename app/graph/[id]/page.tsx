@@ -23,10 +23,10 @@ function heatLabel(v: number) { return v >= 76 ? "EXPLOSIVE ↑↑" : v >= 60 ? 
 function heatColor(v: number) { return v >= 76 ? "var(--stamp)" : v >= 60 ? "#d4af37" : v >= 40 ? "var(--ink-2)" : "#4488ff"; }
 
 export default function GraphPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id }  = useParams<{ id: string }>();
   const [rec,   setRec]   = useState<StoredCompile | null | undefined>(undefined);
   const [sel,   setSel]   = useState<NodeId | null>(null);
-  const [sheet, setSheet] = useState<"info" | "clusters">("info"); // mobile tab
+  const [sheet, setSheet] = useState<"info" | "clusters">("info");
   useEffect(() => { setRec(getCompile(id)); }, [id]);
 
   const states: NodeStateMap = useMemo(
@@ -37,7 +37,6 @@ export default function GraphPage() {
   const vel  = rec?.metrics.field_velocity ?? 50;
   const conf = rec ? confidenceMeta(rec.metrics.confidence, rec.metrics.trajectory) : null;
 
-  /* ── Info panel content (shared between desktop + mobile) ─── */
   const InfoContent = rec ? (
     <>
       <p className="label" style={{ fontSize: "0.46rem" }}>knowledge graph // workspace</p>
@@ -74,16 +73,16 @@ export default function GraphPage() {
     </>
   ) : null;
 
-  /* ── Clusters panel content ───────────────────────────────── */
   const ClustersContent = rec ? (
     <>
       <p className="label mb-1.5" style={{ fontSize: "0.46rem" }}>dependency clusters</p>
       <div className="grid gap-1">
         {NODE_ORDER.map((nid) => {
-          const r = rec.results[nid];
+          const r      = rec.results[nid];
           const active = sel === nid;
           return (
-            <button key={nid} onClick={() => setSel(active ? null : nid)} className="press flex items-center gap-2 px-2 py-1.5 text-left"
+            <button key={nid} onClick={() => setSel(active ? null : nid)}
+              className="press flex items-center gap-2 px-2 py-1.5 text-left"
               style={{ border: "2px solid var(--ink)", background: active ? "var(--stamp)" : "var(--paper)" }}>
               <SourceLogo source={SOURCES[nid].source} />
               <span className="text-[0.7rem] font-bold flex-1" style={{ color: active ? "var(--paper)" : "var(--ink)" }}>{SOURCES[nid].label}</span>
@@ -106,16 +105,25 @@ export default function GraphPage() {
     </>
   ) : null;
 
+  /* ────────────────────────────────────────────────────────────
+     MOBILE layout: canvas at top (relative height) + scrollable panels below
+     DESKTOP layout: fixed full-screen canvas + fixed side panels
+  ──────────────────────────────────────────────────────────── */
   return (
-    <main className="relative h-screen overflow-hidden">
+    <main className="relative min-h-screen overflow-x-hidden md:h-screen md:overflow-hidden">
       <Chrome />
 
-      {/* 3D canvas — always full screen behind everything */}
-      <div className="fixed inset-0 z-0">
+      {/* ── MOBILE: canvas in normal flow (avoids iOS fixed WebGL bug) ── */}
+      <div className="md:hidden relative z-0" style={{ height: "44vh", marginTop: "56px" }}>
+        <RealityGraph nodes={NODE_ORDER} states={states} phase="complete" offsetX={0} fieldVelocity={vel} />
+      </div>
+
+      {/* ── DESKTOP: full-screen canvas ── */}
+      <div className="hidden md:block fixed inset-0 z-0">
         <RealityGraph nodes={NODE_ORDER} states={states} phase="complete" offsetX={1.8} fieldVelocity={vel} />
       </div>
 
-      {/* Not found */}
+      {/* ── Not found ── */}
       {!rec && (
         <div className="fixed left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 brutal p-8 text-center" style={{ background: "var(--paper)" }}>
           <p className="display text-[1.5rem]">{rec === undefined ? "LOADING…" : "NODE NOT FOUND"}</p>
@@ -125,7 +133,7 @@ export default function GraphPage() {
 
       {rec && (
         <>
-          {/* ── DESKTOP layout (md+): fixed side panels ─────────── */}
+          {/* ── DESKTOP side panels ── */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={SPRING}
             className="hidden md:block fixed left-4 top-20 z-10 brutal p-4 w-[240px]" style={{ background: "var(--paper)" }}>
             {InfoContent}
@@ -136,26 +144,26 @@ export default function GraphPage() {
             {ClustersContent}
           </motion.div>
 
-          <div className="hidden md:flex fixed bottom-4 left-4 z-10 mono text-[0.5rem] gap-4 items-center" style={{ color: "var(--ink-2)" }}>
+          <div className="hidden md:flex fixed bottom-4 left-4 z-10 mono text-[0.5rem] gap-4" style={{ color: "var(--ink-2)" }}>
             <span style={{ color: heatColor(vel) }}>■ VELOCITY {vel}/100</span>
             <span>■ CHARCOAL = RESOLVED</span>
             <span style={{ color: "var(--stamp)" }}>■ ORANGE = ACTIVE TRACE</span>
           </div>
 
-          {/* ── MOBILE layout: bottom sheet with tabs ────────────── */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 z-10" style={{ background: "var(--paper)", borderTop: "2px solid var(--ink)", maxHeight: "58vh" }}>
+          {/* ── MOBILE panels: tabs below the canvas ── */}
+          <div className="md:hidden relative z-10" style={{ background: "var(--paper)", borderTop: "2px solid var(--ink)" }}>
             {/* tab strip */}
             <div className="flex" style={{ borderBottom: "2px solid var(--ink)" }}>
               {(["info", "clusters"] as const).map((tab, i) => (
                 <button key={tab} onClick={() => setSheet(tab)}
-                  className="flex-1 mono text-[0.6rem] py-2.5 press"
+                  className="flex-1 mono text-[0.62rem] py-3 press"
                   style={{ borderLeft: i ? "2px solid var(--ink)" : "none", background: sheet === tab ? "var(--ink)" : "var(--paper)", color: sheet === tab ? "var(--paper)" : "var(--ink-3)" }}>
                   {tab === "info" ? "◇ INTEL" : "⬡ CLUSTERS"}
                 </button>
               ))}
             </div>
             {/* tab content */}
-            <div className="overflow-y-auto p-3" style={{ maxHeight: "calc(58vh - 44px)" }}>
+            <div className="p-4 pb-8">
               <AnimatePresence mode="wait">
                 {sheet === "info" ? (
                   <motion.div key="info" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>

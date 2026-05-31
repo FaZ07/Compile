@@ -34,12 +34,12 @@ export default function RadarPage() {
       <div className="relative z-10 mx-auto max-w-5xl px-5 pt-24 pb-24">
         <motion.div variants={riseIn} initial="hidden" animate="show" className="flex items-end justify-between flex-wrap gap-3">
           <div>
-            <span className="cert">◇ STRATEGIC VELOCITY ENGINE</span>
+            <span className="cert">◇ STRATEGIC INTELLIGENCE ENGINE</span>
             <h1 className="display text-[clamp(2rem,5vw,3.4rem)] mt-3">RADAR</h1>
             <p className="mono text-[0.72rem] mt-1" style={{ color: "var(--ink-3)" }}>real-time ecosystem performance · GitHub × arXiv × YC velocity</p>
           </div>
           <div className="flex gap-2">
-            <div className="brutal-inset p-3 text-center"><p className="display text-[2rem] leading-none">{avg}</p><p className="label mt-1" style={{ fontSize: "0.42rem" }}>avg velocity</p></div>
+            <div className="brutal-inset p-3 text-center"><p className="display text-[2rem] leading-none">{avg}</p><p className="label mt-1" style={{ fontSize: "0.42rem" }}>avg score</p></div>
             <div className="brutal-inset p-3 text-center"><p className="display text-[2rem] leading-none">{items.length}</p><p className="label mt-1" style={{ fontSize: "0.42rem" }}>tracked</p></div>
           </div>
         </motion.div>
@@ -67,7 +67,7 @@ export default function RadarPage() {
           <div className="brutal mt-6 overflow-hidden">
             {/* header */}
             <div className="grid items-center gap-2 px-3 py-2 mono text-[0.54rem]" style={{ gridTemplateColumns: "1.6fr 1.4fr 0.9fr 0.8fr 0.7fr", background: "var(--ink)", color: "var(--paper)" }}>
-              <span>TOPIC</span><span>FIELD VELOCITY</span><span>ECO SCORE</span><span>CONF</span><span>STATE</span>
+              <span>TOPIC</span><span>COMPILE SCORE</span><span>ECO SCORE</span><span>CONF</span><span>STATE</span>
             </div>
             {rows.map((r, i) => {
               const eco = ecosystemScore(r.metrics);
@@ -85,7 +85,7 @@ export default function RadarPage() {
             })}
           </div>
         )}
-        <p className="mono text-[0.56rem] mt-4" style={{ color: "var(--ink-3)" }}>Field Velocity weighs commit rate × publication velocity × adoption. Ecosystem Score weighs YC placement × star spikes × launch momentum. Deterministic · recomputed per compile.</p>
+        <p className="mono text-[0.56rem] mt-4" style={{ color: "var(--ink-3)" }}>Compile Score weighs commit rate × publication cadence × adoption. Ecosystem Score weighs YC placement × star spikes × launch momentum. Deterministic · recomputed per compile.</p>
       </div>
     </main>
   );

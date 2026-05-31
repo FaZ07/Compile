@@ -184,8 +184,11 @@ function Console(p: {
         <motion.h1 variants={riseIn} initial="hidden" animate="show" custom={1} className="display text-[clamp(2.4rem,7vw,4.6rem)]">
           COMPILE THE INTERNET.
         </motion.h1>
-        <motion.p variants={riseIn} initial="hidden" animate="show" custom={2} className="mt-3 text-[1.02rem] leading-relaxed max-w-xl" style={{ color: "var(--ink-2)" }}>
-          Not a chatbot. Not search. COMPILE reconciles fragmented public signals — research, code, community, market — into executable strategic intelligence. <strong>Link an intention.</strong>
+        <motion.p variants={riseIn} initial="hidden" animate="show" custom={2} className="display text-[clamp(1.1rem,3vw,1.9rem)] mt-2">
+          NOT A CHATBOT. <span style={{ color: "var(--stamp)" }}>A REALITY COMPILER.</span>
+        </motion.p>
+        <motion.p variants={riseIn} initial="hidden" animate="show" custom={3} className="mt-3 text-[1.02rem] leading-relaxed max-w-xl" style={{ color: "var(--ink-2)" }}>
+          The internet is fragmented across outdated tutorials, abandoned repos, and misleading hype cycles. COMPILE reconciles those signals — research, code, community, market — into one executable intelligence dossier. <strong>Link an intention.</strong>
         </motion.p>
 
         {/* manifest sheet */}
@@ -251,6 +254,10 @@ function Console(p: {
           <Sticky index={1} label="pro tip" text="Inside a dossier, hover the blacked-out Community blocks to declassify the real ecosystem friction." />
           <Sticky index={2} label="it remembers" text="Every compile is filed to Archives — reopen it as a dossier or a live 3D knowledge graph." />
         </div>
+        <div className="mt-9 brutal p-6 text-center">
+          <p className="display text-[clamp(1.1rem,3.2vw,1.9rem)]">THE INTERNET WAS BUILT FOR WEBSITES.</p>
+          <p className="display text-[clamp(1.1rem,3.2vw,1.9rem)]" style={{ color: "var(--stamp)" }}>COMPILE REBUILDS IT FOR MINDS.</p>
+        </div>
         {p.error && <p className="mt-4 mono text-sm" style={{ color: "var(--stamp)" }}>{p.error}</p>}
       </div>
     </motion.section>
@@ -276,7 +283,7 @@ function Compiling(p: {
           <p className="display text-[clamp(1.3rem,3vw,2rem)] mt-2 mono" style={{ color: "var(--stamp)", letterSpacing: "0.02em" }}>{p.status}</p>
           <div className="mt-4 flex items-end gap-4">
             <div>
-              <p className="label">field velocity</p>
+              <p className="label">compile score</p>
               <p className="display text-[3.4rem] leading-none mono">{p.liveVel}<span className="text-[1.2rem]" style={{ color: "var(--ink-3)" }}>/100</span></p>
             </div>
             <div className="flex-1 bar-track h-4 mb-2"><div className="h-full" style={{ width: `${p.liveVel}%`, background: "var(--stamp)", transition: "width 0.1s linear" }} /></div>

@@ -43,7 +43,7 @@ export default function GraphPage() {
             <p className="label">knowledge graph // workspace</p>
             <h1 className="display text-[1.4rem] mt-1 leading-tight">{rec.topic}</h1>
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div className="brutal-inset p-2"><p className="mono text-[1.4rem] font-bold leading-none">{rec.metrics.field_velocity}</p><p className="label" style={{ fontSize: "0.42rem" }}>velocity</p></div>
+              <div className="brutal-inset p-2"><p className="mono text-[1.4rem] font-bold leading-none">{rec.metrics.field_velocity}</p><p className="label" style={{ fontSize: "0.42rem" }}>compile score</p></div>
               <div className="brutal-inset p-2"><p className="mono text-[1.4rem] font-bold leading-none" style={{ color: "var(--stamp)" }}>{rec.metrics.confidence}%</p><p className="label" style={{ fontSize: "0.42rem" }}>confidence</p></div>
             </div>
             <p className="mono text-[0.62rem] mt-3" style={{ color: "var(--ink-2)" }}>{rec.metrics.ecosystem_state.toUpperCase()} ECOSYSTEM · {rec.metrics.trajectory.toUpperCase()}</p>

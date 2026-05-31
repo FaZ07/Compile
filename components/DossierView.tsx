@@ -43,7 +43,7 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
         <div className="grid gap-4 sm:grid-cols-[180px_1fr] mt-4 items-center">
           <div className="text-center brutal-inset p-3">
             <p className="display text-[3.6rem] leading-none">{m.field_velocity}<span className="text-[1rem]" style={{ color: "var(--ink-3)" }}>/100</span></p>
-            <p className="label mt-1">field velocity</p>
+            <p className="label mt-1">compile score</p>
             <p className="mono text-[0.7rem] mt-2 px-2 py-1" style={{ background: "var(--stamp)", color: "var(--paper)" }}>{m.ecosystem_state.toUpperCase()} ECOSYSTEM</p>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -57,7 +57,7 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
         </div>
       </motion.div>
 
-      <Block title="FIELD VELOCITY BREAKDOWN" sub="weighted signal reconciliation">
+      <Block title="COMPILE SCORE BREAKDOWN" sub="weighted signal reconciliation">
         <div className="grid gap-2.5">
           {m.breakdown.map((f) => (
             <div key={f.label} className="flex items-center gap-3">

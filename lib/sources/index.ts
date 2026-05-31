@@ -1,7 +1,7 @@
 // Source adapter registry. Every external source implements one uniform shape,
 // so the orchestrator treats them identically and adding a source = one file.
 
-import type { NodeId, Level, Goal } from "../types";
+import type { NodeId, Level, Goal, Domain } from "../types";
 import { contextAdapter }   from "./wikipedia";
 import { papersAdapter }    from "./arxiv";
 import { codeAdapter }      from "./github";
@@ -13,6 +13,7 @@ export interface SourceContext {
   topic: string;
   level: Level;
   goal: Goal;
+  domain?: Domain;
 }
 
 export interface SourceAdapter {

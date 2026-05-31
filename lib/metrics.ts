@@ -4,7 +4,7 @@
 
 import type {
   CompileMetrics, VelocityFactor, EcosystemState,
-  NodeResult, Paper, Repo, Discussion, TrendData, Trajectory,
+  NodeResult, Paper, Repo, Discussion, TrendData, Trajectory, Domain,
 } from "./types";
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
@@ -80,13 +80,54 @@ export function computeMetrics(results: Record<string, NodeResult>): CompileMetr
   };
 }
 
-/** Deterministic repo implementation score (directive 4E), 0-100. */
-export function repoScore(r: Repo, maxStars: number): number {
-  const starsNorm = maxStars ? (Math.log10(r.stars + 1) / Math.log10(maxStars + 1)) * 100 : 0;
-  const recentCommit = clamp(100 - r.pushed_days_ago * 1.6);
-  const breadth = clamp(r.topics.length * 18);          // proxy: documented surface
-  const freshness = clamp(100 - r.pushed_days_ago * 0.8);
-  return Math.round(clamp(starsNorm * 0.5 + recentCommit * 0.25 + breadth * 0.15 + freshness * 0.1));
+// ── Domain signal vocabulary for semantic relevance ──────────
+const DOMAIN_SIGNALS: Partial<Record<Domain, string[]>> = {
+  "ai-engineering":     ["ml","ai","neural","model","training","llm","transformer","deep","learning","embedding","vector","diffusion","rag","agent","inference","gpt","nlp","cv"],
+  "web-development":    ["web","frontend","backend","react","vue","angular","next","node","html","css","javascript","typescript","api","rest","fullstack","svelte"],
+  "systems-programming":["rust","cpp","c++","system","kernel","embedded","memory","concurrency","performance","compiler","wasm","low-level","allocator","simd"],
+  "interview-prep":     ["leetcode","algorithm","data-structure","interview","competitive","dsa","coding-challenge","grind","arrays","graphs","trees"],
+  "data-science":       ["pandas","numpy","sklearn","jupyter","statistics","analytics","visualization","data-science","matplotlib","scipy","seaborn"],
+  "devops":             ["docker","kubernetes","k8s","terraform","ansible","helm","devops","cicd","monitoring","observability","prometheus","grafana"],
+};
+
+/** Semantic relevance of a repo to a topic + domain, 0–100. */
+export function semanticRelevance(r: Repo, topic: string, domain?: Domain): number {
+  const corpus = `${r.name} ${r.full_name} ${r.description ?? ""} ${r.topics.join(" ")}`.toLowerCase();
+
+  // Topic word match ratio
+  const topicWords = topic.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !["the","and","for","how","with","using","into","from"].includes(w));
+  const matchCount = topicWords.filter((w) => corpus.includes(w)).length;
+  const matchRatio = topicWords.length ? matchCount / topicWords.length : 0.5;
+
+  // Domain alignment bonus / penalty
+  const signals = domain ? (DOMAIN_SIGNALS[domain] ?? []) : [];
+  let domainScore = 0;
+  if (signals.length > 0) {
+    const domainMatches = signals.filter((s) => corpus.includes(s)).length;
+    const ratio = domainMatches / signals.length;
+    domainScore = ratio >= 0.15 ? ratio * 30 : -35; // penalty for clear off-domain repos
+  }
+
+  return clamp(Math.round(matchRatio * 70 + domainScore));
+}
+
+/** Repo implementation score: semantic relevance dominates (0.5 weight). */
+export function repoScore(r: Repo, maxStars: number, topic?: string, domain?: Domain): number {
+  const starsNorm  = maxStars ? (Math.log10(r.stars + 1) / Math.log10(maxStars + 1)) * 100 : 0;
+  const activity   = clamp(100 - r.pushed_days_ago * 1.6);
+  const breadth    = clamp(r.topics.length * 18);
+  const freshness  = clamp(100 - r.pushed_days_ago * 0.8);
+  const quality    = starsNorm * 0.4 + activity * 0.35 + breadth * 0.15 + freshness * 0.1;
+
+  if (topic) {
+    const relevance = semanticRelevance(r, topic, domain);
+    // New weighting: semantic relevance 0.5 · activity 0.2 · quality 0.2 · popularity 0.1
+    return Math.round(clamp(relevance * 0.5 + activity * 0.2 + quality * 0.2 + starsNorm * 0.1));
+  }
+  return Math.round(clamp(quality));
 }
 
 export function normalize(value: number, all: number[]): number {

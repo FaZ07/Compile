@@ -26,7 +26,6 @@ export default function Chrome() {
     <header className="fixed top-0 inset-x-0 z-50 px-4 lg:px-7 py-3 flex items-center justify-between" style={{ borderBottom: "2px solid var(--ink)", background: "var(--paper)" }}>
       <Link href="/" className="press btn-ink px-3 py-1.5 flex items-center gap-2">
         <span className="display text-[1rem]">COMPILE</span>
-        <span className="mono text-[0.5rem]" style={{ color: "var(--stamp)" }}>v2.0</span>
       </Link>
       <nav className="hidden md:flex items-center gap-1">
         {links.map(([l, href]) => (

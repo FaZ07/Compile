@@ -28,13 +28,27 @@ export const NODE_ORDER: NodeId[] = (Object.values(SOURCES) as SourceMeta[])
 export type Level = "beginner" | "intermediate" | "advanced";
 export type Goal  = "learn" | "build" | "research" | "career" | "startup";
 
+export type Domain         = "ai-engineering" | "web-development" | "systems-programming" | "interview-prep" | "data-science" | "devops" | "general-programming";
+export type IntentPrecision = "high" | "medium" | "low";
+
+export type StartupType    = "ai" | "infra" | "systems" | "research" | "fintech";
+export type LearnProfile   = "fundamentals" | "practical" | "deep-theory" | "fast-track" | "full-mastery";
+export type BuildProfile   = "mvp" | "production" | "scalable" | "solo-dev" | "enterprise";
+export type CareerProfile  = "faang" | "startup" | "research" | "freelance" | "quant" | "infra";
+export type ResearchProfile = "papers" | "implementation" | "frontier" | "academic" | "open-source";
+export type GoalProfile = LearnProfile | BuildProfile | CareerProfile | ResearchProfile | StartupType;
+
 export interface Intent {
   raw: string;
   topic: string;
   level: Level;
   goal: Goal;
-  timeframe: string;  // "1 week" | "1 month" | "3 months" | "weekend"
-  focus: string[];    // ["theory","implementation","papers",...]
+  timeframe: string;
+  focus: string[];
+  startupType?: StartupType;  // legacy — prefer goalProfile
+  goalProfile?: GoalProfile;
+  domain?:      Domain;
+  precision?:   IntentPrecision;
 }
 
 // ── source payloads ─────────────────────────────────────────────

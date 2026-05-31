@@ -32,13 +32,15 @@ interface Bundle { intent: Intent; order: NodeId[]; results: Record<string, Node
 const CACHE = new Map<string, Bundle>();
 
 export async function POST(req: Request) {
-  let body: { intention?: string; level?: Level; goal?: Goal; timeframe?: string };
+  let body: { intention?: string; level?: Level; goal?: Goal; timeframe?: string; startupType?: string; goalProfile?: string };
   try { body = await req.json(); }
   catch { return new Response("bad json", { status: 400 }); }
 
   const text = (body.intention ?? "").trim();
   if (!text) return new Response("missing intention", { status: 400 });
-  const cacheKey = `${text}|${body.level ?? ""}|${body.goal ?? ""}|${body.timeframe ?? ""}`.toLowerCase();
+  // Normalise: goalProfile wins, startupType is legacy alias for startup goal
+  const effectiveProfile = (body.goalProfile || body.startupType) ?? undefined;
+  const cacheKey = `${text}|${body.level ?? ""}|${body.goal ?? ""}|${body.timeframe ?? ""}|${effectiveProfile ?? ""}`.toLowerCase();
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -50,7 +52,11 @@ export async function POST(req: Request) {
         // 1 — parse intent
         sse.send({ type: "stage", stage: "parse" });
         sse.send({ type: "status", payload: "PARSING INTENT VECTOR" });
-        const intent = await parseIntent(text, { level: body.level, goal: body.goal, timeframe: body.timeframe });
+        const intent = await parseIntent(text, {
+          level: body.level, goal: body.goal, timeframe: body.timeframe,
+          startupType: body.startupType as import("@/lib/types").StartupType | undefined,
+          goalProfile:  effectiveProfile  as import("@/lib/types").GoalProfile  | undefined,
+        });
         sse.send({ type: "intent", intent });
 
         // 2 — compile DAG
@@ -64,7 +70,7 @@ export async function POST(req: Request) {
         const factTimer = setInterval(() => { if (fi < facts.length) sse.send({ type: "fact", fact: facts[fi++] }); }, 1500);
         const statusTimer = setInterval(() => { sse.send({ type: "status", payload: STATUS[si++ % STATUS.length] }); }, 850);
 
-        const ctx: SourceContext = { topic: intent.topic, level: intent.level, goal: intent.goal };
+        const ctx: SourceContext = { topic: intent.topic, level: intent.level, goal: intent.goal, domain: intent.domain };
         const results: Record<string, NodeResult> = {};
         await Promise.all(ADAPTERS.map((a) => runNode(a.id, sse, results, () => a.run(ctx))));
         clearInterval(factTimer); clearInterval(statusTimer);

@@ -114,5 +114,52 @@ body::after {
   .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 }
 
+/* ── signal lock stamp animation ──────────────────────────────── */
+@keyframes stamp-in {
+  0%   { transform: scale(2.2) rotate(-14deg); opacity: 0; filter: blur(2px); }
+  55%  { transform: scale(0.92) rotate(2deg);  opacity: 1; filter: none; }
+  80%  { transform: scale(1.05) rotate(-0.5deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes lock-ring {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes warn-flash {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+@keyframes confidence-tick {
+  0%, 100% { opacity: 1; }
+  40%       { opacity: 0.3; }
+}
+
+.stamp-in       { animation: stamp-in 0.46s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.warn-flash     { animation: warn-flash 2.2s ease-in-out infinite; }
+.conf-tick      { animation: confidence-tick 1.8s ease-in-out 3; }
+
+/* confidence stamp colour variants */
+.cs-locked      { background: var(--ink);   color: var(--paper); }
+.cs-verified    { background: var(--ink);   color: var(--paper); }
+.cs-high        { background: var(--stamp); color: var(--paper); }
+.cs-moderate    { border: 2px solid var(--ink); color: var(--ink); background: transparent; }
+.cs-low         { background: #c0392b; color: var(--paper); }
+.cs-fragment    { background: #7d1c1c; color: var(--paper); }
+
+/* node lock ring — position: absolute sibling */
+.lock-ring {
+  position: absolute; inset: -6px; border-radius: 50%;
+  border: 2px solid var(--stamp);
+  pointer-events: none;
+  animation: lock-ring 0.7s ease-out forwards;
+}
+
+/* pulse-winner — subtle orange glow on the winning compare card */
+@keyframes pulse-winner {
+  0%, 100% { box-shadow: 5px 5px 0 0 var(--stamp); }
+  50%       { box-shadow: 5px 5px 0 0 var(--stamp), 0 0 22px rgba(255,69,0,0.2); }
+}
+.pulse-winner { animation: pulse-winner 2.8s ease-in-out infinite; }
+
 /* reduced motion */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

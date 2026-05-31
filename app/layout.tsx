@@ -17,9 +17,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "COMPILE — the reality compiler for learning",
+  title: "COMPILE — strategic internet intelligence",
   description:
-    "Say what you want to learn. COMPILE fires papers, code, tutorials, community, and trends across the live internet in parallel, then reconciles one executable knowledge plan — with real-time comparative metrics. Powered by Anakin Wire + Groq.",
+    "COMPILE fires 6 live sources across the internet in parallel and reconciles them into one executable strategic intelligence dossier — with field velocity, confidence scores, and ecosystem risk analysis. Powered by Anakin Wire + Groq.",
 };
 
 export const viewport: Viewport = {

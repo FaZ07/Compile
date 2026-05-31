@@ -11,22 +11,48 @@ import { getCompile, type StoredCompile } from "@/lib/store";
 import { SPRING } from "@/lib/motion";
 import { SOURCES, NODE_ORDER, type NodeId, type Paper, type Repo, type Tutorial, type Discussion, type TrendData, type ContextData } from "@/lib/types";
 
+function confidenceMeta(confidence: number, trajectory: string) {
+  if (confidence >= 80 && trajectory === "rising") return { label: "CONSENSUS LOCKED", cls: "cs-locked" };
+  if (confidence >= 75)  return { label: "VERIFIED",                cls: "cs-verified" };
+  if (confidence >= 60)  return { label: "HIGH CONVICTION",         cls: "cs-high" };
+  if (confidence >= 45)  return { label: "MODERATE SIGNAL",         cls: "cs-moderate" };
+  if (confidence >= 30)  return { label: "LOW CONFIDENCE",          cls: "cs-low" };
+  return                        { label: "ECOSYSTEM FRAGMENTATION", cls: "cs-fragment" };
+}
+
+function heatLabel(vel: number): string {
+  if (vel >= 76) return "EXPLOSIVE ↑↑";
+  if (vel >= 60) return "RISING ↑";
+  if (vel >= 40) return "STABLE →";
+  return "COOLING ↓";
+}
+function heatColor(vel: number): string {
+  if (vel >= 76) return "var(--stamp)";
+  if (vel >= 60) return "#d4af37";
+  if (vel >= 40) return "var(--ink-2)";
+  return "#4488ff";
+}
+
 export default function GraphPage() {
   const { id } = useParams<{ id: string }>();
   const [rec, setRec] = useState<StoredCompile | null | undefined>(undefined);
   const [sel, setSel] = useState<NodeId | null>(null);
   useEffect(() => { setRec(getCompile(id)); }, [id]);
 
-  // selecting a cluster lights its node orange in the live 3D graph
   const states: NodeStateMap = useMemo(
     () => Object.fromEntries(NODE_ORDER.map((k) => [k, k === sel ? "running" : "done"])) as NodeStateMap,
     [sel],
   );
 
+  const vel  = rec?.metrics.field_velocity ?? 50;
+  const conf = rec ? confidenceMeta(rec.metrics.confidence, rec.metrics.trajectory) : null;
+
   return (
     <main className="relative h-screen overflow-hidden">
       <Chrome />
-      <div className="fixed inset-0 z-0"><RealityGraph nodes={NODE_ORDER} states={states} phase="complete" offsetX={1.8} /></div>
+      <div className="fixed inset-0 z-0">
+        <RealityGraph nodes={NODE_ORDER} states={states} phase="complete" offsetX={1.8} fieldVelocity={vel} />
+      </div>
 
       {!rec && (
         <div className="fixed left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 brutal p-8 text-center" style={{ background: "var(--paper)" }}>
@@ -39,48 +65,98 @@ export default function GraphPage() {
         <>
           {/* left — intelligence readout */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={SPRING}
-            className="fixed left-4 top-20 z-10 brutal p-4 w-[260px]" style={{ background: "var(--paper)" }}>
-            <p className="label">knowledge graph // workspace</p>
-            <h1 className="display text-[1.4rem] mt-1 leading-tight">{rec.topic}</h1>
-            <div className="grid grid-cols-2 gap-2 mt-3">
-              <div className="brutal-inset p-2"><p className="mono text-[1.4rem] font-bold leading-none">{rec.metrics.field_velocity}</p><p className="label" style={{ fontSize: "0.42rem" }}>compile score</p></div>
-              <div className="brutal-inset p-2"><p className="mono text-[1.4rem] font-bold leading-none" style={{ color: "var(--stamp)" }}>{rec.metrics.confidence}%</p><p className="label" style={{ fontSize: "0.42rem" }}>confidence</p></div>
+            className="fixed left-4 top-20 z-10 brutal p-4 w-[240px]" style={{ background: "var(--paper)" }}>
+            <p className="label" style={{ fontSize: "0.46rem" }}>knowledge graph // workspace</p>
+            <h1 className="display text-[1.3rem] mt-1 leading-tight">{rec.topic}</h1>
+
+            <div className="grid grid-cols-2 gap-1.5 mt-3">
+              <div className="brutal-inset p-2">
+                <p className="mono text-[1.3rem] font-bold leading-none" style={{ color: heatColor(vel) }}>{vel}</p>
+                <p className="label mt-0.5" style={{ fontSize: "0.4rem" }}>compile score</p>
+              </div>
+              <div className="brutal-inset p-2">
+                <p className="mono text-[1.3rem] font-bold leading-none" style={{ color: "var(--stamp)" }}>{rec.metrics.confidence}%</p>
+                <p className="label mt-0.5" style={{ fontSize: "0.4rem" }}>confidence</p>
+              </div>
             </div>
-            <p className="mono text-[0.62rem] mt-3" style={{ color: "var(--ink-2)" }}>{rec.metrics.ecosystem_state.toUpperCase()} ECOSYSTEM · {rec.metrics.trajectory.toUpperCase()}</p>
-            <Link href={`/dossier/${rec.id}`} className="press btn-ink inline-flex items-center gap-1.5 px-4 py-2 mt-3 mono text-[0.66rem]">FULL DOSSIER <ArrowUR s={11} /></Link>
+
+            {/* velocity heat bar */}
+            <div className="mt-2.5">
+              <div className="flex items-center justify-between mb-1">
+                <span className="label" style={{ fontSize: "0.4rem" }}>field velocity</span>
+                <span className="mono text-[0.5rem] font-bold" style={{ color: heatColor(vel) }}>{heatLabel(vel)}</span>
+              </div>
+              <div className="bar-track h-2">
+                <div className="h-full transition-all" style={{ width: `${vel}%`, background: heatColor(vel) }} />
+              </div>
+            </div>
+
+            {/* confidence stamp */}
+            {conf && (
+              <div className="mt-2">
+                <span className={`mono ${conf.cls} conf-tick`}
+                  style={{ fontSize: "0.48rem", padding: "0.2rem 0.5rem", letterSpacing: "0.12em", display: "inline-block" }}>
+                  {conf.label}
+                </span>
+              </div>
+            )}
+
+            <p className="mono text-[0.56rem] mt-2" style={{ color: "var(--ink-2)" }}>
+              {rec.metrics.ecosystem_state.toUpperCase()} · {rec.metrics.trajectory.toUpperCase()} · {rec.metrics.artifacts_found} artifacts
+            </p>
+            {rec.intent?.goalProfile && (
+              <p className="mono text-[0.48rem] mt-1.5 px-2 py-0.5 inline-block tracking-[0.14em]"
+                style={{ background: "var(--stamp)", color: "var(--paper)" }}>
+                {rec.intent.goal.toUpperCase()} // {String(rec.intent.goalProfile).toUpperCase().replace(/-/g," ")}
+              </p>
+            )}
+            {rec.intent?.domain && rec.intent.domain !== "general-programming" && (
+              <p className="mono text-[0.44rem] mt-1 tracking-widest" style={{ color: "var(--ink-3)" }}>
+                DOMAIN · {rec.intent.domain.toUpperCase().replace(/-/g," ")}
+              </p>
+            )}
+            <Link href={`/dossier/${rec.id}`} className="press btn-ink inline-flex items-center gap-1.5 px-3 py-2 mt-2.5 mono text-[0.62rem]">FULL DOSSIER <ArrowUR s={10} /></Link>
           </motion.div>
 
-          {/* right — cluster control sheet */}
+          {/* right — cluster control */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={SPRING}
-            className="fixed right-4 top-20 bottom-4 z-10 brutal p-4 w-[300px] overflow-y-auto" style={{ background: "var(--paper)" }}>
-            <p className="label mb-2">dependency clusters</p>
-            <div className="grid gap-1.5">
+            className="fixed right-4 top-20 bottom-4 z-10 brutal p-4 w-[280px] overflow-y-auto" style={{ background: "var(--paper)" }}>
+            <p className="label mb-1.5" style={{ fontSize: "0.46rem" }}>dependency clusters</p>
+            <div className="grid gap-1">
               {NODE_ORDER.map((nid) => {
                 const r = rec.results[nid];
                 const active = sel === nid;
                 return (
-                  <button key={nid} onClick={() => setSel(active ? null : nid)} className="press flex items-center gap-2 px-2 py-2 text-left"
+                  <button key={nid} onClick={() => setSel(active ? null : nid)} className="press flex items-center gap-2 px-2 py-1.5 text-left"
                     style={{ border: "2px solid var(--ink)", background: active ? "var(--stamp)" : "var(--paper)" }}>
                     <SourceLogo source={SOURCES[nid].source} />
-                    <span className="text-[0.74rem] font-bold flex-1" style={{ color: active ? "var(--paper)" : "var(--ink)" }}>{SOURCES[nid].label}</span>
-                    <span className="mono text-[0.6rem]" style={{ color: active ? "var(--paper)" : "var(--ink-3)" }}>{r?.count ?? 0}</span>
+                    <span className="text-[0.7rem] font-bold flex-1" style={{ color: active ? "var(--paper)" : "var(--ink)" }}>{SOURCES[nid].label}</span>
+                    <span className="mono text-[0.56rem]" style={{ color: active ? "var(--paper)" : "var(--ink-3)" }}>{r?.count ?? 0}</span>
+                    {active && <span className="mono text-[0.48rem] stamp-in" style={{ color: "var(--paper)" }}>TRACE ▸</span>}
                   </button>
                 );
               })}
             </div>
 
             {sel && (
-              <div className="mt-3 pt-3" style={{ borderTop: "2px solid var(--ink)" }}>
-                <p className="label mb-2">{SOURCES[sel].label} · {SOURCES[sel].source}</p>
+              <div className="mt-3 pt-2.5" style={{ borderTop: "2px solid var(--ink)" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="label" style={{ fontSize: "0.46rem" }}>{SOURCES[sel].label} · {SOURCES[sel].source}</p>
+                  {conf && <span className={`mono ${conf.cls}`} style={{ fontSize: "0.42rem", padding: "0.1rem 0.4rem" }}>{conf.label}</span>}
+                </div>
                 <ClusterItems id={sel} rec={rec} />
               </div>
             )}
-            {!sel && <p className="mono text-[0.62rem] mt-3" style={{ color: "var(--ink-3)" }}>SELECT A CLUSTER TO TRACE ITS NODES →</p>}
+            {!sel && (
+              <p className="mono text-[0.58rem] mt-3" style={{ color: "var(--ink-3)" }}>SELECT A CLUSTER TO ILLUMINATE DEPENDENCIES →</p>
+            )}
           </motion.div>
 
-          {/* legend */}
-          <div className="fixed bottom-4 left-4 z-10 mono text-[0.56rem] flex gap-3" style={{ color: "var(--ink-2)" }}>
-            <span>■ CHARCOAL = RESOLVED</span><span style={{ color: "var(--stamp)" }}>■ ORANGE = ACTIVE TRACE</span>
+          {/* bottom legend */}
+          <div className="fixed bottom-4 left-4 z-10 mono text-[0.52rem] flex gap-4 items-center" style={{ color: "var(--ink-2)" }}>
+            <span style={{ color: heatColor(vel) }}>■ VELOCITY {vel}/100</span>
+            <span>■ CHARCOAL = RESOLVED</span>
+            <span style={{ color: "var(--stamp)" }}>■ ORANGE = ACTIVE TRACE</span>
           </div>
         </>
       )}
@@ -90,25 +166,28 @@ export default function GraphPage() {
 
 function ClusterItems({ id, rec }: { id: NodeId; rec: StoredCompile }) {
   const data = rec.results[id]?.data;
-  if (!data) return <p className="mono text-[0.62rem]" style={{ color: "var(--ink-3)" }}>NO SIGNAL</p>;
+  if (!data) return <p className="mono text-[0.58rem]" style={{ color: "var(--ink-3)" }}>NO SIGNAL</p>;
 
-  if (id === "papers") return <List items={(data as Paper[]).map((p) => ({ label: p.title, meta: `${p.year} · ${p.category}`, url: p.url }))} />;
-  if (id === "code") return <List items={(data as Repo[]).map((r) => ({ label: r.full_name, meta: `★${(r.stars / 1000).toFixed(0)}k · ${r.language}`, url: r.url }))} />;
+  if (id === "papers")    return <List items={(data as Paper[]).map((p) => ({ label: p.title, meta: `${p.year} · ${p.category}`, url: p.url }))} />;
+  if (id === "code")      return <List items={(data as Repo[]).map((r) => ({ label: r.full_name, meta: `★${(r.stars / 1000).toFixed(0)}k · ${r.language}`, url: r.url }))} />;
   if (id === "tutorials") return <List items={(data as Tutorial[]).map((t) => ({ label: t.title, meta: t.platform, url: t.url }))} />;
   if (id === "community") return <List items={(data as Discussion[]).map((d) => ({ label: d.title, meta: `${d.source} · ↑${d.score}`, url: d.url }))} />;
-  if (id === "trends") { const t = data as TrendData; return <List items={[...t.hot_tools.map((x) => ({ label: x, meta: "tool" })), ...t.companies.map((x) => ({ label: x, meta: "YC" })), ...t.launches.map((x) => ({ label: x, meta: "PH" }))]} />; }
+  if (id === "trends") {
+    const t = data as TrendData;
+    return <List items={[...t.hot_tools.map((x) => ({ label: x, meta: "tool" })), ...t.companies.map((x) => ({ label: x, meta: "YC" })), ...t.launches.map((x) => ({ label: x, meta: "PH" }))]} />;
+  }
   const c = data as ContextData;
-  return <p className="text-[0.74rem] leading-relaxed" style={{ color: "var(--ink-2)" }}>{c.summary}</p>;
+  return <p className="text-[0.7rem] leading-relaxed" style={{ color: "var(--ink-2)" }}>{c.summary}</p>;
 }
 
 function List({ items }: { items: { label: string; meta: string; url?: string }[] }) {
   return (
-    <div className="grid gap-1.5">
+    <div className="grid gap-1">
       {items.map((it, i) => {
         const inner = (
           <>
-            <span className="text-[0.72rem] font-semibold leading-snug line-clamp-2">{it.label}</span>
-            <span className="mono text-[0.54rem] block mt-0.5" style={{ color: "var(--ink-3)" }}>{it.meta}</span>
+            <span className="text-[0.68rem] font-semibold leading-snug line-clamp-2">{it.label}</span>
+            <span className="mono text-[0.5rem] block mt-0.5" style={{ color: "var(--ink-3)" }}>{it.meta}</span>
           </>
         );
         return it.url
@@ -118,4 +197,3 @@ function List({ items }: { items: { label: string; meta: string; url?: string }[
     </div>
   );
 }
-

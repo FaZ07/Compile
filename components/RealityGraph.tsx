@@ -266,13 +266,14 @@ export default function RealityGraph({ nodes, states, phase, offsetX = 0, fieldV
 
       const dest = ph === "complete" ? camDone : ph === "idle" ? camIdle : camWork;
       const ox = offRef.current;
-      // more dramatic orbit speed in compile
+      // On portrait/mobile, pull camera back so nodes don't fill the frame
+      const portraitZBoost = camera.aspect < 0.9 ? 4.5 : camera.aspect < 1.2 ? 2.0 : 0;
       const swing = ph === "idle" ? 1.4 : compilingNow ? 1.2 : completeNow ? 0.6 : 0.5;
       const rate  = ph === "idle" ? 0.1 : compilingNow ? 0.26 : 0.18;
       camera.position.lerp(new THREE.Vector3(
         dest.x + ox + Math.sin(t * rate) * swing,
         dest.y + (compilingNow ? Math.sin(t * 0.52) * 0.45 : completeNow ? Math.sin(t * 0.2) * 0.12 : 0),
-        dest.z + Math.cos(t * rate) * swing,
+        dest.z + Math.cos(t * rate) * swing + portraitZBoost,
       ), 0.026);
       lookTarget.x = ox;
       camera.lookAt(lookTarget);

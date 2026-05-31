@@ -99,7 +99,7 @@ export default function ComparePage() {
   return (
     <main className="relative min-h-screen overflow-x-hidden">
       <Chrome />
-      <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-14 sm:pt-16 pb-10">
+      <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-24 sm:pt-16 pb-10">
         <motion.div variants={riseIn} initial="hidden" animate="show">
           <span className="cert">◇ STRATEGIC COMPARISON ENGINE</span>
           <h1 className="display text-[clamp(1.8rem,5vw,3.2rem)] mt-2">A vs B. <span style={{ color: "var(--stamp)" }}>ONE VERDICT.</span></h1>

@@ -114,7 +114,8 @@ export default function GraphPage() {
       <Chrome />
 
       {/* ── MOBILE: canvas in normal flow (avoids iOS fixed WebGL bug) ── */}
-      <div className="md:hidden relative z-0" style={{ height: "44vh", marginTop: "56px" }}>
+      {/* marginTop = logo bar (~48px) + mobile nav strip (~36px) = 84px */}
+      <div className="md:hidden relative z-0" style={{ height: "44vh", marginTop: "84px" }}>
         <RealityGraph nodes={NODE_ORDER} states={states} phase="complete" offsetX={0} fieldVelocity={vel} />
       </div>
 

@@ -123,7 +123,7 @@ export default function DossierView({ intent, synthesis: s, metrics: m, results:
   const confMeta  = confidenceMeta(m.confidence, m.trajectory);
 
   return (
-    <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-16 pb-12">
+    <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-24 sm:pt-16 pb-12">
       <StickyPanel facts={facts} />
 
       {/* classification strip */}

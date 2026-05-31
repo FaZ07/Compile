@@ -31,7 +31,7 @@ export default function RadarPage() {
   return (
     <main className="relative min-h-screen overflow-x-hidden">
       <Chrome />
-      <div className="relative z-10 mx-auto max-w-5xl px-5 pt-20 pb-14">
+      <div className="relative z-10 mx-auto max-w-5xl px-3 sm:px-5 pt-24 sm:pt-20 pb-14">
         <motion.div variants={riseIn} initial="hidden" animate="show" className="flex items-end justify-between flex-wrap gap-3">
           <div>
             <span className="cert">◇ STRATEGIC INTELLIGENCE ENGINE</span>

@@ -249,7 +249,7 @@ function Console(p: {
 }) {
   return (
     <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={SPRING} className="relative min-h-screen w-full">
-      <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-14 sm:pt-16 pb-6">
+      <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-24 sm:pt-16 pb-6">
         <motion.div variants={riseIn} initial="hidden" animate="show" className="flex items-center gap-3 flex-wrap">
           <span className="cert">◇ AUTONOMOUS INTERNET INTELLIGENCE COMPILER</span>
         </motion.div>
@@ -392,7 +392,7 @@ function Compiling(p: {
 
   return (
     <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={SPRING} className="relative min-h-screen w-full">
-      <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-14 sm:pt-16 pb-44 sm:pb-36 grid gap-3 lg:grid-cols-[1fr_320px]">
+      <div className="relative z-10 mx-auto max-w-6xl px-3 sm:px-5 pt-24 sm:pt-16 pb-44 sm:pb-36 grid gap-3 lg:grid-cols-[1fr_320px]">
 
         {/* status + velocity */}
         <div className="brutal p-4 self-start" style={{ background: "var(--paper)" }}>
